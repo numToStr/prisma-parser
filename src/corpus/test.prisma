@@ -1,0 +1,118 @@
+// // This is your Prisma schema file
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// // Use Prisma Migration to sync this schema with the database
+// // Locally:          npx prisma migrate dev --name SomeName
+// // CI/Test Pipeline: npx prisma migrate deploy --name SomeName
+// // https://www.prisma.io/docs/concepts/components/prisma-migrate
+//
+// // How to connect to the database
+// // https://www.prisma.io/docs/concepts/components/prisma-schema/data-sources
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+//
+// // Generator creates the client to be used by the application
+// // const {PrismaClient} = require('@prisma/client'); const prisma = new PrismaClient();
+// // https://www.prisma.io/docs/concepts/components/prisma-schema/generators
+// generator client {
+//   provider = "prisma-client-js"
+// }
+//
+// // Formatting requires aligned columns
+// // at least two spaces between columns
+// // requirements reset after blank line
+// // https://www.prisma.io/docs/concepts/components/prisma-schema
+// // https://www.prisma.io/docs/concepts/components/prisma-schema#auto-formatting
+// model Warehouse {
+//     id  Int  @id  @default(autoincrement())
+//     // createdAt will be set to current datetime upon creation: do not modify it
+//     // @updatedAt markes the field to be managed by Prisma when record is changed
+//     createdAt   DateTime    @default(now())
+//     updatedAt   DateTime    @updatedAt
+//     // In general there is a demand for addresses to be specifially broken into
+//     // town, county(regionally), and country. '?' marks fields a not required:
+//     // https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#optional-and-mandatory-fields
+//     description     String?
+//     address1        String?
+//     address2        String?
+//     address3        String?
+//     addressTown     String?
+//     addressCounty   String?
+//     addressCountry  String?
+//     postcode        String?
+//     // Warehouses contains multiple bin locations
+//     binLocations  BinLocation[]
+//     // Users should be subbed to specific warehouses
+//     users   User[]
+// }
+//
+// model BinLocation {
+//     id  Int  @id  @default(autoincrement())
+//     createdAt   DateTime    @default(now())
+//     updatedAt   DateTime    @updatedAt  @default(now())
+//     description  String?
+//     // Fictional warehouse-like co-ordinates
+//     aisle   String?
+//     shelf   String?
+//     warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
+//     warehouseId  Int
+//     // Bins potentially contain many items each with a count
+//     stockItemCounts  StockItemBinLocationCount[]
+// }
+
+model StockItemBinLocationCount {
+    // Many-to-Many relations require a Relation Table.
+    // https://www.prisma.io/docs/concepts/components/prisma-schema/relations/many-to-many-relations
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt  @default(now())
+    binLocation    BinLocation    @relation(fields: [binLocationId], references: [id])
+    binLocationId  Int
+    stockItem      StockItem      @relation(fields: [stockItemId], references: [id])
+    stockItemId    Int
+    // Tally the amount of stock on this record
+    // TODO: Maintain as integer; fractions shoud be determined by StockItem configuration
+    stockItemCount  Int
+    // The ID for this table will be compound and unique
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#id-1
+    @@id([binLocationId, stockItemId])
+    // The ID is already unique but for reference, the equivalent might have been
+    // @@unique(fields: [binLocationId, stockItemId], name: "binLocationStockItem")
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#unique-1
+}
+
+// model StockItem {
+//     id  Int  @id  @default(autoincrement())
+//     createdAt   DateTime    @default(now())
+//     updatedAt   DateTime    @updatedAt  @default(now())
+//     description   String?
+//     // Barcodes should be unique as scanning a label should bring us to this item
+//     // Barcodes are numbers, but can contain leading zeros, so storing as String
+//     ean  String?  @unique // "European/International Article Number" - 13 char
+//     upc  String?  @unique // "Universal Product Code" - 12 char
+//     // Stock Items potentially exist in many bins each with different count
+//     stockItemCounts  StockItemBinLocationCount[]
+//     // TODO: Calulated Field to tally StockItemBinLocationCount?
+//     // TODO: Selling and Purchase "per" fields to determine fractional values if needed
+// }
+//
+// model User {
+//     id    Int  @id  @default(autoincrement())
+//     createdAt  DateTime  @default(now())
+//     updatedAt  DateTime  @updatedAt  @default(now())
+//     email       String   @unique
+//     firstName   String?  @db.VarChar(200)
+//     lastName    String?  @db.VarChar(200)
+//     // User role might determine access privilage
+//     role   Role     @default(OPERATIVE)
+//     // Users should be subbed to specific warehouses
+//     warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
+//     warehouseId  Int
+// }
+//
+// enum Role {
+//   OPERATIVE
+//   BACKOFFICE
+//   ADMIN
+// }
