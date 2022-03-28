@@ -1,8 +1,6 @@
-mod lexer;
-
 use std::fs::read_to_string;
 
-use crate::lexer::Lexer;
+use pp::Lexer;
 
 fn main() {
     let prisma = read_to_string("src/corpus/test.prisma").unwrap();

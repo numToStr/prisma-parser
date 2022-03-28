@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Keywords
     DataSource, // datasource
@@ -23,7 +23,7 @@ pub enum Token {
     Optional, // ?
     Dot,      // .
 
-    // User defined
+    // literals
     Id(String), // user defined identified (like source/generator/model name, table fields)
     Str(String), // string value
     Num(String), // number value

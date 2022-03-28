@@ -25,6 +25,7 @@ impl Lexer {
         Self::lex().parse(source)
     }
 
+    #[inline]
     fn lex() -> impl Parser<char, Vec<Span>, Error = Err> {
         // parsers for operators
         let attr = just("@@")
