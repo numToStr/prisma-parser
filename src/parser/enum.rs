@@ -1,8 +1,9 @@
-use crate::{Creator, Token, TokenType};
+use chumsky::{prelude::just, Parser};
 
-use super::terminal::Id;
+use crate::{impl_parse, TokenType};
 
-// FIXME: missing open + close curly range
+use super::terminal::{Id, Token};
+
 #[derive(Debug)]
 pub struct Enum {
     pub this: Token,
@@ -10,44 +11,24 @@ pub struct Enum {
     pub variants: Variants,
 }
 
-impl Creator for Enum {
-    fn create(tokens: &mut super::Tokens) -> super::PPResult<Self> {
-        match tokens.next() {
-            Some(x) => {
-                let name = Id::create(tokens)?;
-                let variants = Variants::create(tokens)?;
-
-                Ok(Self {
-                    this: x.clone(),
-                    name,
-                    variants,
-                })
-            }
-            None => panic!("eof"),
-        }
-    }
-}
+impl_parse!(Enum, {
+    just(TokenType::Enum)
+        .map_with_span(|x, y| Token { ty: x, range: y })
+        .then(Id::parse())
+        .then(Variants::parse())
+        .map(|((this, name), variants)| Enum {
+            this,
+            name,
+            variants,
+        })
+});
 
 #[derive(Debug)]
 pub struct Variants(Vec<Id>);
 
-impl Creator for Variants {
-    fn create(tokens: &mut super::Tokens) -> super::PPResult<Self> {
-        // open curly
-        let _ = tokens.next().unwrap();
-
-        let mut variants = vec![];
-
-        loop {
-            match tokens.peek() {
-                Some(x) if x.ty == TokenType::CloseCurly => {
-                    let _ = tokens.next().unwrap();
-
-                    return Ok(Self(variants));
-                }
-                Some(_) => variants.push(Id::create(tokens)?),
-                None => panic!("closing bracket missing"),
-            };
-        }
-    }
-}
+impl_parse!(Variants, {
+    Id::parse()
+        .repeated()
+        .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
+        .map(Self)
+});

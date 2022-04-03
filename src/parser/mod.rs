@@ -1,5 +1,5 @@
 mod datasource;
-// mod r#enum;
+mod r#enum;
 mod func;
 mod generator;
 mod node;

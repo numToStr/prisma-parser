@@ -7,7 +7,7 @@ use chumsky::{
 
 use crate::{impl_parse, TokenType};
 
-use super::{datasource::Datasource, generator::Generator};
+use super::{datasource::Datasource, generator::Generator, r#enum::Enum};
 
 #[derive(Debug)]
 pub enum Node {
@@ -19,11 +19,16 @@ pub enum Node {
         node: Generator,
         range: Range<usize>,
     },
+    Enum {
+        node: Enum,
+        range: Range<usize>,
+    },
 }
 
 impl_parse!(Node, {
     choice::<_, Simple<TokenType>>((
         Datasource::parse().map_with_span(|n, r| Node::Datasource { node: n, range: r }),
         Generator::parse().map_with_span(|n, r| Node::Generator { node: n, range: r }),
+        Enum::parse().map_with_span(|n, r| Node::Enum { node: n, range: r }),
     ))
 });
