@@ -1,66 +1,66 @@
-// // This is your Prisma schema file
-// // learn more about it in the docs: https://pris.ly/d/prisma-schema
-//
-// // Use Prisma Migration to sync this schema with the database
-// // Locally:          npx prisma migrate dev --name SomeName
-// // CI/Test Pipeline: npx prisma migrate deploy --name SomeName
-// // https://www.prisma.io/docs/concepts/components/prisma-migrate
-//
-// // How to connect to the database
-// // https://www.prisma.io/docs/concepts/components/prisma-schema/data-sources
-// datasource db {
-//   provider = "mysql"
-//   url      = env("DATABASE_URL")
-// }
-//
-// // Generator creates the client to be used by the application
-// // const {PrismaClient} = require('@prisma/client'); const prisma = new PrismaClient();
-// // https://www.prisma.io/docs/concepts/components/prisma-schema/generators
-// generator client {
-//   provider = "prisma-client-js"
-// }
-//
-// // Formatting requires aligned columns
-// // at least two spaces between columns
-// // requirements reset after blank line
-// // https://www.prisma.io/docs/concepts/components/prisma-schema
-// // https://www.prisma.io/docs/concepts/components/prisma-schema#auto-formatting
-// model Warehouse {
-//     id  Int  @id  @default(autoincrement())
-//     // createdAt will be set to current datetime upon creation: do not modify it
-//     // @updatedAt markes the field to be managed by Prisma when record is changed
-//     createdAt   DateTime    @default(now())
-//     updatedAt   DateTime    @updatedAt
-//     // In general there is a demand for addresses to be specifially broken into
-//     // town, county(regionally), and country. '?' marks fields a not required:
-//     // https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#optional-and-mandatory-fields
-//     description     String?
-//     address1        String?
-//     address2        String?
-//     address3        String?
-//     addressTown     String?
-//     addressCounty   String?
-//     addressCountry  String?
-//     postcode        String?
-//     // Warehouses contains multiple bin locations
-//     binLocations  BinLocation[]
-//     // Users should be subbed to specific warehouses
-//     users   User[]
-// }
-//
-// model BinLocation {
-//     id  Int  @id  @default(autoincrement())
-//     createdAt   DateTime    @default(now())
-//     updatedAt   DateTime    @updatedAt  @default(now())
-//     description  String?
-//     // Fictional warehouse-like co-ordinates
-//     aisle   String?
-//     shelf   String?
-//     warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
-//     warehouseId  Int
-//     // Bins potentially contain many items each with a count
-//     stockItemCounts  StockItemBinLocationCount[]
-// }
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Use Prisma Migration to sync this schema with the database
+// Locally:          npx prisma migrate dev --name SomeName
+// CI/Test Pipeline: npx prisma migrate deploy --name SomeName
+// https://www.prisma.io/docs/concepts/components/prisma-migrate
+
+// How to connect to the database
+// https://www.prisma.io/docs/concepts/components/prisma-schema/data-sources
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Generator creates the client to be used by the application
+// const {PrismaClient} = require('@prisma/client'); const prisma = new PrismaClient();
+// https://www.prisma.io/docs/concepts/components/prisma-schema/generators
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Formatting requires aligned columns
+// at least two spaces between columns
+// requirements reset after blank line
+// https://www.prisma.io/docs/concepts/components/prisma-schema
+// https://www.prisma.io/docs/concepts/components/prisma-schema#auto-formatting
+model Warehouse {
+    id  Int  @id  @default(autoincrement())
+    // createdAt will be set to current datetime upon creation: do not modify it
+    // @updatedAt markes the field to be managed by Prisma when record is changed
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    // In general there is a demand for addresses to be specifially broken into
+    // town, county(regionally), and country. '?' marks fields a not required:
+    // https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#optional-and-mandatory-fields
+    description     String?
+    address1        String?
+    address2        String?
+    address3        String?
+    addressTown     String?
+    addressCounty   String?
+    addressCountry  String?
+    postcode        String?
+    // Warehouses contains multiple bin locations
+    binLocations  BinLocation[]
+    // Users should be subbed to specific warehouses
+    users   User[]
+}
+
+model BinLocation {
+    id  Int  @id  @default(autoincrement())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt  @default(now())
+    description  String?
+    // Fictional warehouse-like co-ordinates
+    aisle   String?
+    shelf   String?
+    warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
+    warehouseId  Int
+    // Bins potentially contain many items each with a count
+    stockItemCounts  StockItemBinLocationCount[]
+}
 
 model StockItemBinLocationCount {
     // Many-to-Many relations require a Relation Table.

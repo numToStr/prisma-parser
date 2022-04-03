@@ -5,20 +5,20 @@ fn lex_datsource() {
     assert_eq!(
         Lexer::parse("datasource db {}").unwrap(),
         [
-            Span {
-                ty: Token::DataSource,
+            Token {
+                ty: TokenType::DataSource,
                 range: 0..10
             },
-            Span {
-                ty: Token::Id("db".into()),
+            Token {
+                ty: TokenType::Id("db".into()),
                 range: 11..13
             },
-            Span {
-                ty: Token::LeftCurly,
+            Token {
+                ty: TokenType::OpenCurly,
                 range: 14..15
             },
-            Span {
-                ty: Token::RightCurly,
+            Token {
+                ty: TokenType::CloseCurly,
                 range: 15..16
             }
         ]
@@ -37,56 +37,56 @@ fn lex_model() {
         )
         .unwrap(),
         [
-            Span {
-                ty: Token::Model,
+            Token {
+                ty: TokenType::Model,
                 range: 17..22
             },
-            Span {
-                ty: Token::Id("User".into()),
+            Token {
+                ty: TokenType::Id("User".into()),
                 range: 23..27
             },
-            Span {
-                ty: Token::LeftCurly,
+            Token {
+                ty: TokenType::OpenCurly,
                 range: 28..29
             },
-            Span {
-                ty: Token::Id("name".into()),
+            Token {
+                ty: TokenType::Id("name".into()),
                 range: 50..54
             },
-            Span {
-                ty: Token::String,
+            Token {
+                ty: TokenType::String,
                 range: 55..61
             },
-            Span {
-                ty: Token::Prop,
+            Token {
+                ty: TokenType::Prop,
                 range: 62..63
             },
-            Span {
-                ty: Token::Id("db".into()),
+            Token {
+                ty: TokenType::Id("db".into()),
                 range: 63..65
             },
-            Span {
-                ty: Token::Dot,
+            Token {
+                ty: TokenType::Dot,
                 range: 65..66
             },
-            Span {
-                ty: Token::Id("Varchar".into()),
+            Token {
+                ty: TokenType::Id("Varchar".into()),
                 range: 66..73
             },
-            Span {
-                ty: Token::LeftParen,
+            Token {
+                ty: TokenType::OpenParen,
                 range: 73..74
             },
-            Span {
-                ty: Token::Num("200".into()),
+            Token {
+                ty: TokenType::Num("200".into()),
                 range: 74..77
             },
-            Span {
-                ty: Token::RightParen,
+            Token {
+                ty: TokenType::CloseParen,
                 range: 77..78
             },
-            Span {
-                ty: Token::RightCurly,
+            Token {
+                ty: TokenType::CloseCurly,
                 range: 95..96
             },
         ]

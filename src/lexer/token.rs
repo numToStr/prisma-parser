@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
+pub enum TokenType {
     // Keywords
     DataSource, // datasource
     Generator,  // client
@@ -7,12 +7,12 @@ pub enum Token {
     Enum,       // enum
 
     // Ctrl chars
-    LeftParen,   // (
-    RightParen,  // )
-    LeftCurly,   // {
-    RightCurly,  // }
-    LeftSquare,  // [
-    RightSquare, // ]
+    OpenParen,   // (
+    CloseParen,  // )
+    OpenCurly,   // {
+    CloseCurly,  // }
+    OpenSquare,  // [
+    CloseSquare, // ]
     Colon,       // :
     Comma,       // ,
 
@@ -27,6 +27,7 @@ pub enum Token {
     Id(String), // user defined identified (like source/generator/model name, table fields)
     Str(String), // string value
     Num(String), // number value
+    Bool(bool), // boolean value
 
     // Data Types
     DateTime,

@@ -4,16 +4,14 @@ pub use token::*;
 use std::ops::Range;
 
 use chumsky::{
-    prelude::{filter, just, skip_then_retry_until, take_until, Simple},
+    prelude::{choice, filter, just, skip_then_retry_until, take_until, Simple},
     text::{self, TextParser},
     Parser,
 };
 
-type Err = Simple<char>;
-
-#[derive(Debug, PartialEq)]
-pub struct Span {
-    pub ty: Token,
+#[derive(Debug, PartialEq, Clone)]
+pub struct Token {
+    pub ty: TokenType,
     pub range: Range<usize>,
 }
 
@@ -21,55 +19,58 @@ pub struct Span {
 pub struct Lexer;
 
 impl Lexer {
-    pub fn parse(source: &str) -> Result<Vec<Span>, Vec<Err>> {
+    pub fn parse(source: &str) -> Result<Vec<Token>, Vec<Simple<char>>> {
         Self::lex().parse(source)
     }
 
     #[inline]
-    fn lex() -> impl Parser<char, Vec<Span>, Error = Err> {
+    fn lex() -> impl Parser<char, Vec<Token>, Error = Simple<char>> {
         // parsers for operators
-        let attr = just("@@")
-            .to(Token::Attr)
-            .or(just('@').to(Token::Prop))
-            .or(just('=').to(Token::Assign))
-            .or(just('?').to(Token::Optional))
-            .or(just('.').to(Token::Dot))
+        let attr = choice((
+            just("@@").to(TokenType::Attr),
+            just('@').to(TokenType::Prop),
+            just('=').to(TokenType::Assign),
+            just('?').to(TokenType::Optional),
+            just('.').to(TokenType::Dot),
             // parsers for control characters (delimiters, semicolons, etc.)
-            .or(just('(').to(Token::LeftParen))
-            .or(just(')').to(Token::RightParen))
-            .or(just('[').to(Token::LeftSquare))
-            .or(just(']').to(Token::RightSquare))
-            .or(just('{').to(Token::LeftCurly))
-            .or(just('}').to(Token::RightCurly))
-            .or(just(':').to(Token::Colon))
-            .or(just(',').to(Token::Comma));
+            just('(').to(TokenType::OpenParen),
+            just(')').to(TokenType::CloseParen),
+            just('[').to(TokenType::OpenSquare),
+            just(']').to(TokenType::CloseSquare),
+            just('{').to(TokenType::OpenCurly),
+            just('}').to(TokenType::CloseCurly),
+            just(':').to(TokenType::Colon),
+            just(',').to(TokenType::Comma),
+        ));
 
         // A parser for numbers
         let num = text::int(10)
             .chain::<char, _, _>(just('.').chain(text::digits(10)).or_not().flatten())
             .collect::<String>()
-            .map(Token::Num);
+            .map(TokenType::Num);
 
         // A parser for strings
         let string = just('"')
             .ignore_then(filter(|c| *c != '"').repeated())
             .then_ignore(just('"'))
             .collect()
-            .map(Token::Str);
+            .map(TokenType::Str);
 
         // A parser for identifiers and keywords
         let ident = text::ident().map(|ident: String| match ident.as_str() {
             // keywords
-            "datasource" => Token::DataSource,
-            "generator" => Token::Generator,
-            "model" => Token::Model,
-            "enum" => Token::Enum,
+            "datasource" => TokenType::DataSource,
+            "generator" => TokenType::Generator,
+            "model" => TokenType::Model,
+            "enum" => TokenType::Enum,
             // datatypes
-            "String" => Token::String,
-            "Int" => Token::Int,
-            "DateTime" => Token::DateTime,
+            "String" => TokenType::String,
+            "Int" => TokenType::Int,
+            "DateTime" => TokenType::DateTime,
             // everything else is user defined
-            _ => Token::Id(ident),
+            "true" => TokenType::Bool(true),
+            "false" => TokenType::Bool(false),
+            _ => TokenType::Id(ident),
         });
 
         // A parser for linewise comment
@@ -84,7 +85,7 @@ impl Lexer {
 
         token
             .padded_by(comment.repeated())
-            .map_with_span(|ty, range| Span { ty, range })
+            .map_with_span(|ty, range| Token { ty, range })
             .padded()
             .repeated()
     }

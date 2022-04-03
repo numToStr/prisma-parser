@@ -1,0 +1,81 @@
+Prisma =
+    Datasource
+    | Generator
+    | Model
+    | Enum
+
+Datasource =
+    "datasource" Id Object
+
+Generator =
+    "generator" Id Object
+
+Model =
+    "model" Id "{" Column+ "}"
+
+Enum =
+    "enum" Id "{" Id+ "}"
+
+Object =
+    "{" Field+ "}"
+
+Field =
+    Id "=" Value
+
+Value =
+    Primary | Array | Fn
+
+Fn =
+    Id Args
+
+// TODO: fn() as arg
+Args =
+    "(" Primary ("," Primary)* | NamedArg ("," NamedArg)* ")"
+
+NamedArg =
+    Id ":" Value
+
+Column =
+    Id ColumnType Attributes?
+
+ColumnType =
+    (Scalar | ReferenceType) Modifier
+
+Modifier =
+    "[" "]" | ("?")?
+
+Attribute =
+    "@" AttributeName Args?
+
+AttributeName =
+    /^[a-zA-Z0-1.]/
+
+Attributes =
+    Attribute*
+
+Id =
+    /^[a-zA-Z0-1_]/
+
+Primary =
+    STRING | NUMBER | BOOLEAN
+
+Scalar =
+    "String"
+    | "Boolean"
+    | "Int"
+    | "BigInt"
+    | "Float"
+    | "Decimal"
+    | "DateTime"
+    | "Json"
+    | "Bytes"
+    | "Unsupported" "(" Primary ")"
+
+ReferenceType =
+    Id
+
+Array =
+    "[" ArrayItem ("," ArrayItem)* "]"
+
+ArrayItem =
+    ReferenceType | Primary
