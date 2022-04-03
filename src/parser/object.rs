@@ -1,54 +1,39 @@
-use core::panic;
+use chumsky::{
+    prelude::{choice, just},
+    Parser,
+};
 
-use crate::{Creator, Token, TokenType};
+use crate::{impl_parse, TokenType};
 
 use super::{
+    func::Func,
     terminal::{Id, Primary},
-    PPResult,
 };
 
 #[derive(Debug)]
 pub struct Fields(Vec<Field>);
 
-impl Creator for Fields {
-    fn create(tokens: &mut super::Tokens) -> PPResult<Self> {
-        // open curly
-        let _ = tokens.next().unwrap();
-
-        let mut fields = vec![];
-
-        loop {
-            match tokens.peek() {
-                Some(Token {
-                    ty: TokenType::CloseCurly,
-                    ..
-                }) => {
-                    let _ = tokens.next().unwrap();
-
-                    return Ok(Self(fields));
-                }
-                None => panic!("closing bracket missing"),
-                Some(_) => fields.push(Field::create(tokens)?),
-            };
-        }
-
-        // while let Some(
-        //     x @ Token {
-        //         ty: TokenType::RightCurly,
-        //         ..
-        //     },
-        // ) = tokens.next()
-        // {
-        //     dbg!(x);
-        // }
-    }
-}
+impl_parse!(Fields, {
+    Field::parse()
+        .repeated()
+        .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
+        .map(Self)
+});
 
 #[derive(Debug)]
 pub enum Value {
     Primary(Primary),
     Array(Array),
+    Func(Func),
 }
+
+impl_parse!(Value, {
+    choice((
+        Primary::parse().map(Self::Primary),
+        Array::parse().map(Self::Array),
+        Func::parse().map(Self::Func),
+    ))
+});
 
 #[derive(Debug)]
 pub struct Field {
@@ -56,48 +41,22 @@ pub struct Field {
     pub value: Value,
 }
 
-impl Creator for Field {
-    fn create(tokens: &mut super::Tokens) -> PPResult<Self> {
-        let key = Id::create(tokens)?;
-
-        // =
-        tokens.next();
-
-        let value = match tokens.peek() {
-            Some(Token {
-                ty: TokenType::Str(_) | TokenType::Num(_) | TokenType::Bool(_),
-                ..
-            }) => Value::Primary(Primary::create(tokens)?),
-            Some(x) if x.ty == TokenType::OpenSquare => Value::Array(Array::create(tokens)?),
-            _ => panic!("value not found"),
-        };
-
-        Ok(Field { key, value })
-    }
-}
+impl_parse!(Field, {
+    Id::parse()
+        .then_ignore(just(TokenType::Assign))
+        .then(Value::parse())
+        .map(|(x, y)| Self { key: x, value: y })
+});
 
 #[derive(Debug)]
 pub struct Array(Vec<ArrayItem>);
 
-impl Creator for Array {
-    fn create(tokens: &mut super::Tokens) -> PPResult<Self> {
-        // open square
-        let _ = tokens.next().unwrap();
-
-        let mut items = vec![ArrayItem::create(tokens)?];
-
-        loop {
-            match tokens.next() {
-                Some(x) if x.ty == TokenType::Comma => {
-                    items.push(ArrayItem::create(tokens)?);
-                }
-                Some(x) if x.ty == TokenType::CloseSquare => return Ok(Self(items)),
-                None => panic!("Closing square bracket not found"),
-                x => panic!("Unexpected {:#?}", x),
-            }
-        }
-    }
-}
+impl_parse!(Array, {
+    ArrayItem::parse()
+        // .separated_by(just(TokenType::Comma))
+        .delimited_by(just(TokenType::OpenSquare), just(TokenType::CloseSquare))
+        .map(Self)
+});
 
 #[derive(Debug)]
 pub enum ArrayItem {
@@ -105,18 +64,14 @@ pub enum ArrayItem {
     Primary(Primary),
 }
 
-impl Creator for ArrayItem {
-    fn create(tokens: &mut super::Tokens) -> PPResult<Self> {
-        match tokens.peek() {
-            Some(Token {
-                ty: TokenType::Str(_) | TokenType::Num(_) | TokenType::Bool(_),
-                ..
-            }) => Ok(ArrayItem::Primary(Primary::create(tokens)?)),
-            Some(Token {
-                ty: TokenType::Id(_),
-                ..
-            }) => Ok(ArrayItem::Ref(Id::create(tokens)?)),
-            _ => panic!("WTF"),
-        }
-    }
-}
+// NOTE: A neat thing about this function is that it won't allow mix datatypes
+impl_parse!(ArrayItem, Vec<ArrayItem>, {
+    choice((
+        Primary::parse()
+            .map(Self::Primary)
+            .separated_by(just(TokenType::Comma)),
+        Id::parse()
+            .map(Self::Ref)
+            .separated_by(just(TokenType::Comma)),
+    ))
+});

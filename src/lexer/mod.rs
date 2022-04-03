@@ -9,22 +9,18 @@ use chumsky::{
     Parser,
 };
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Token {
-    pub ty: TokenType,
-    pub range: Range<usize>,
-}
+pub type Spanned = (TokenType, Range<usize>);
 
 #[derive(Debug)]
 pub struct Lexer;
 
 impl Lexer {
-    pub fn parse(source: &str) -> Result<Vec<Token>, Vec<Simple<char>>> {
+    pub fn parse(source: &str) -> Result<Vec<Spanned>, Vec<Simple<char>>> {
         Self::lex().parse(source)
     }
 
     #[inline]
-    fn lex() -> impl Parser<char, Vec<Token>, Error = Simple<char>> {
+    fn lex() -> impl Parser<char, Vec<Spanned>, Error = Simple<char>> {
         // parsers for operators
         let attr = choice((
             just("@@").to(TokenType::Attr),
@@ -85,7 +81,7 @@ impl Lexer {
 
         token
             .padded_by(comment.repeated())
-            .map_with_span(|ty, range| Token { ty, range })
+            .map_with_span(|ty, range| (ty, range))
             .padded()
             .repeated()
     }

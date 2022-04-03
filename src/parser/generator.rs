@@ -1,6 +1,11 @@
-use crate::{Creator, Token};
+use chumsky::{prelude::just, Parser};
 
-use super::{object::Fields, terminal::Id, PPResult};
+use crate::{impl_parse, TokenType};
+
+use super::{
+    object::Fields,
+    terminal::{Id, Token},
+};
 
 #[derive(Debug)]
 pub struct Generator {
@@ -9,20 +14,10 @@ pub struct Generator {
     pub fields: Fields,
 }
 
-impl Creator for Generator {
-    fn create(tokens: &mut super::Tokens) -> PPResult<Self> {
-        match tokens.next() {
-            Some(x) => {
-                let name = Id::create(tokens)?;
-                let fields = Fields::create(tokens)?;
-
-                Ok(Self {
-                    this: x.clone(),
-                    name,
-                    fields,
-                })
-            }
-            None => panic!("EOF"),
-        }
-    }
-}
+impl_parse!(Generator, {
+    just(TokenType::Generator)
+        .map_with_span(|t, s| Token { ty: t, range: s })
+        .then(Id::parse())
+        .then(Fields::parse())
+        .map(|((this, name), fields)| Self { this, name, fields })
+});

@@ -1,64 +1,56 @@
 mod datasource;
-mod r#enum;
+// mod r#enum;
 mod func;
 mod generator;
 mod node;
 mod object;
 mod terminal;
 
-use std::{error::Error, iter::Peekable, slice::Iter};
+use std::ops::Range;
 
-use crate::{Token, TokenType};
+use chumsky::{chain::Chain, prelude::Simple, Parser, Stream};
 
-use self::{
-    datasource::Datasource,
-    generator::Generator,
-    node::{Document, Node},
-    r#enum::Enum,
-};
+use crate::{parser::node::Node, Lexer, TokenType};
 
-type Tokens<'p> = Peekable<Iter<'p, Token>>;
-
-type PPResult<T> = Result<T, Box<dyn Error>>;
-
-pub(super) trait Creator {
-    fn create(tokens: &mut Tokens) -> PPResult<Self>
-    where
-        Self: std::marker::Sized;
+// Little helper macro for making parse function
+#[macro_export]
+macro_rules! impl_parse {
+    ($id: ident, $ret: ty, $body: expr) => {
+        impl $id {
+            pub fn parse(
+            ) -> impl chumsky::Parser<TokenType, $ret, Error = chumsky::prelude::Simple<TokenType>>
+            {
+                $body
+            }
+        }
+    };
+    ($id: ident, $body: expr) => {
+        impl $id {
+            pub fn parse(
+            ) -> impl chumsky::Parser<TokenType, Self, Error = chumsky::prelude::Simple<TokenType>>
+            {
+                $body
+            }
+        }
+    };
 }
 
 #[derive(Debug)]
-pub struct Parser;
+pub struct Prisma {
+    pub range: Range<usize>,
+    pub nodes: Vec<Node>,
+}
 
-impl Parser {
-    pub fn parse(spans: &[Token]) -> PPResult<Document> {
-        let mut document = Document::default();
-        let mut tokens = spans.iter().peekable();
+impl Prisma {
+    pub fn parse(src: &str) -> Result<Self, Vec<Simple<TokenType>>> {
+        let src_len = src.chars().len();
+        let tokens = Lexer::parse(src).unwrap();
+        let stream = Stream::from_iter(src_len..src_len + 1, tokens.into_iter());
 
-        loop {
-            match tokens.peek() {
-                Some(x) if x.ty == TokenType::DataSource => {
-                    document.add_node(Node::Datasource(Datasource::create(&mut tokens)?))
-                }
-                Some(x) if x.ty == TokenType::Generator => {
-                    document.add_node(Node::Generator(Generator::create(&mut tokens)?))
-                }
-                Some(x) if x.ty == TokenType::Enum => {
-                    document.add_node(Node::Enum(Enum::create(&mut tokens)?))
-                }
-                Some(Token {
-                    ty: TokenType::Model,
-                    ..
-                }) => {
-                    tokens.next();
-                }
-                None => break,
-                _ => {
-                    panic!("Unexpected token: {:#?}", tokens.next())
-                }
-            }
-        }
-
-        Ok(document)
+        Node::parse()
+            .repeated()
+            // .recover_with(skip_then_retry_until([]))
+            .map_with_span(|nodes, range| Self { nodes, range })
+            .parse(stream)
     }
 }
