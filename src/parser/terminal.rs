@@ -1,41 +1,79 @@
 use std::ops::Range;
 
-use chumsky::{prelude::choice, select, Parser};
+use chumsky::{
+    prelude::{choice, filter_map, just, Simple},
+    Error, Parser,
+};
 
 use crate::{impl_parse, TokenType};
 
 #[derive(Debug)]
-pub struct Token {
-    pub ty: TokenType,
+pub enum Keyword {
+    DataSource,
+    Generator,
+    Model,
+    Enum,
+}
+
+#[derive(Debug)]
+pub struct Id {
+    pub value: Keyword,
     pub range: Range<usize>,
 }
 
 #[derive(Debug)]
 pub enum Primary {
-    String(Token),
-    Number(Token),
-    Bool(Token),
+    String { value: String, range: Range<usize> },
+    Number { value: usize, range: Range<usize> },
+    Bool { value: bool, range: Range<usize> },
 }
 
-// FIXME: somehow improve this
 impl_parse!(Primary, {
-    choice((
-        select! { x @ TokenType::Str(_) => x }
-            .map_with_span(|t, s| Self::String(Token { ty: t, range: s })),
-        select! { x @ TokenType::Num(_) => x }
-            .map_with_span(|t, s| Self::Number(Token { ty: t, range: s })),
-        select! { x @ TokenType::Bool(_) => x }
-            .map_with_span(|t, s| Self::Bool(Token { ty: t, range: s })),
-    ))
+    filter_map(|s, t| match t {
+        TokenType::Str(x) => Ok(Self::String { value: x, range: s }),
+        TokenType::Num(x) => Ok(Self::Number { value: x, range: s }),
+        TokenType::Bool(x) => Ok(Self::Bool { value: x, range: s }),
+        _ => Err(Simple::expected_input_found(s, None, Some(t))),
+    })
 });
 
-// FIXME: maybe merge with `Token`
 #[derive(Debug)]
-pub struct Id(pub Token);
+pub struct Name {
+    pub value: String,
+    pub range: Range<usize>,
+}
 
-impl_parse!(Id, {
-    select! {
-        x @ TokenType::Id(_) => x
-    }
-    .map_with_span(|t, s| Id(Token { ty: t, range: s }))
+impl_parse!(Name, {
+    filter_map(|s, t| match t {
+        TokenType::Id(x) => Ok(Self { value: x, range: s }),
+        _ => Err(Simple::expected_input_found(s, None, Some(t))),
+    })
+});
+
+#[derive(Debug, Clone)]
+pub enum Scalar {
+    String,
+    Boolean,
+    Int,
+    BigInt,
+    Float,
+    Decimal,
+    DateTime,
+    Json,
+    Bytes,
+    // Unsupported
+}
+
+impl_parse!(Scalar, {
+    choice((
+        just(TokenType::String).to(Scalar::String),
+        just(TokenType::Boolean).to(Scalar::Boolean),
+        just(TokenType::Int).to(Scalar::Int),
+        just(TokenType::BigInt).to(Scalar::BigInt),
+        just(TokenType::Float).to(Scalar::Float),
+        just(TokenType::Decimal).to(Scalar::Decimal),
+        just(TokenType::DateTime).to(Scalar::DateTime),
+        just(TokenType::Json).to(Scalar::Json),
+        just(TokenType::Bytes).to(Scalar::Bytes),
+    ))
 });

@@ -26,11 +26,17 @@ pub enum TokenType {
     // literals
     Id(String), // user defined identified (like source/generator/model name, table fields)
     Str(String), // string value
-    Num(String), // number value
+    Num(usize), // number value
     Bool(bool), // boolean value
 
     // Data Types
-    DateTime,
     String,
+    Boolean,
     Int,
+    BigInt,
+    Float,
+    Decimal,
+    DateTime,
+    Json,
+    Bytes,
 }

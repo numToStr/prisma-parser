@@ -7,7 +7,7 @@ use crate::{impl_parse, TokenType};
 
 use super::{
     func::Func,
-    terminal::{Id, Primary},
+    terminal::{Name, Primary},
 };
 
 #[derive(Debug)]
@@ -37,12 +37,12 @@ impl_parse!(Value, {
 
 #[derive(Debug)]
 pub struct Field {
-    pub key: Id,
+    pub key: Name,
     pub value: Value,
 }
 
 impl_parse!(Field, {
-    Id::parse()
+    Name::parse()
         .then_ignore(just(TokenType::Assign))
         .then(Value::parse())
         .map(|(x, y)| Self { key: x, value: y })
@@ -60,7 +60,7 @@ impl_parse!(Array, {
 
 #[derive(Debug)]
 pub enum ArrayItem {
-    Ref(Id),
+    Ref(Name),
     Primary(Primary),
 }
 
@@ -70,7 +70,7 @@ impl_parse!(ArrayItem, Vec<ArrayItem>, {
         Primary::parse()
             .map(Self::Primary)
             .separated_by(just(TokenType::Comma)),
-        Id::parse()
+        Name::parse()
             .map(Self::Ref)
             .separated_by(just(TokenType::Comma)),
     ))

@@ -43,7 +43,7 @@ impl Lexer {
         let num = text::int(10)
             .chain::<char, _, _>(just('.').chain(text::digits(10)).or_not().flatten())
             .collect::<String>()
-            .map(TokenType::Num);
+            .map(|x| TokenType::Num(x.parse().unwrap()));
 
         // A parser for strings
         let string = just('"')

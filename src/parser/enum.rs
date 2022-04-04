@@ -2,19 +2,22 @@ use chumsky::{prelude::just, Parser};
 
 use crate::{impl_parse, TokenType};
 
-use super::terminal::{Id, Token};
+use super::terminal::{Id, Keyword, Name};
 
 #[derive(Debug)]
 pub struct Enum {
-    pub this: Token,
-    pub name: Id,
+    pub this: Id,
+    pub name: Name,
     pub variants: Variants,
 }
 
 impl_parse!(Enum, {
     just(TokenType::Enum)
-        .map_with_span(|x, y| Token { ty: x, range: y })
-        .then(Id::parse())
+        .map_with_span(|_, y| Id {
+            value: Keyword::Enum,
+            range: y,
+        })
+        .then(Name::parse())
         .then(Variants::parse())
         .map(|((this, name), variants)| Enum {
             this,
@@ -24,10 +27,10 @@ impl_parse!(Enum, {
 });
 
 #[derive(Debug)]
-pub struct Variants(Vec<Id>);
+pub struct Variants(Vec<Name>);
 
 impl_parse!(Variants, {
-    Id::parse()
+    Name::parse()
         .repeated()
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
         .map(Self)

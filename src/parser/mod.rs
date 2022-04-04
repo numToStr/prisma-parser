@@ -2,6 +2,7 @@ mod datasource;
 mod r#enum;
 mod func;
 mod generator;
+mod model;
 mod node;
 mod object;
 mod terminal;

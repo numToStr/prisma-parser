@@ -5,16 +5,16 @@ use chumsky::{
 
 use crate::{impl_parse, TokenType};
 
-use super::terminal::{Id, Primary};
+use super::terminal::{Name, Primary};
 
 #[derive(Debug)]
 pub struct Func {
-    pub name: Id,
+    pub name: Name,
     pub args: Args,
 }
 
 impl_parse!(Func, {
-    Id::parse()
+    Name::parse()
         .then(Args::parse())
         .map(|(x, y)| Self { name: x, args: y })
 });

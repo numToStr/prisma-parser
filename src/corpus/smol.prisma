@@ -15,15 +15,18 @@ enum Role {
 }
 
 // model User {
-//     id              Int  @id  @default(autoincrement())
-//     createdAt       DateTime  @default(now())
-//     updatedAt       DateTime  @updatedAt  @default(now())
-//     email           String   @unique
-//     firstName       String?
-//     lastName        String?
-//     // User role might determine access privilage
-//     role            Role     @default(OPERATIVE)
-//     // Users should be subbed to specific warehouses
-//     warehouse       Warehouse  @relation(fields: [warehouseId], references: [id])
-//     warehouseId     Int
+//     id      Int
+//     name    String?
 // }
+
+model User {
+    id            Int           // @id  @default(autoincrement())
+    createdAt     DateTime      // @default(now())
+    updatedAt     DateTime      // @updatedAt  @default(now())
+    email         String        // @unique
+    firstName     String?
+    lastName      String?
+    role          Role          // @default(OPERATIVE)
+    warehouse     Warehouse     // @relation(fields: [warehouseId], references: [id])
+    warehouseId   Int
+}
