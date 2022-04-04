@@ -13,9 +13,9 @@ pub struct Enum {
 
 impl_parse!(Enum, {
     just(TokenType::Enum)
-        .map_with_span(|_, y| Id {
+        .map_with_span(|_, range| Id {
             value: Keyword::Enum,
-            range: y,
+            range,
         })
         .then(Name::parse())
         .then(Variants::parse())

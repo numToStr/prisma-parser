@@ -18,9 +18,9 @@ pub struct Model {
 
 impl_parse!(Model, {
     just(TokenType::Model)
-        .map_with_span(|_, y| Id {
+        .map_with_span(|_, range| Id {
             value: Keyword::Model,
-            range: y,
+            range,
         })
         .then(Name::parse())
         .then(Columns::parse())
@@ -41,13 +41,13 @@ impl_parse!(Columns, {
     Column::parse()
         .repeated()
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|v, r| Self { value: v, range: r })
+        .map_with_span(|value, range| Self { value, range })
 });
 
 #[derive(Debug)]
 pub struct Column {
-    pub key: Name,
-    pub value: ColumnType,
+    pub name: Name,
+    pub r#type: ColumnType,
     // pub directives
     pub range: Range<usize>,
 }
@@ -55,10 +55,10 @@ pub struct Column {
 impl_parse!(Column, {
     Name::parse()
         .then(ColumnType::parse())
-        .map_with_span(|(key, value), r| Self {
-            range: r,
-            key,
-            value,
+        .map_with_span(|(name, t), range| Self {
+            name,
+            r#type: t,
+            range,
         })
 });
 
@@ -72,10 +72,10 @@ pub struct ColumnType {
 impl_parse!(ColumnType, {
     Type::parse()
         .then(Modifier::parse())
-        .map_with_span(|(v, m), r| Self {
-            value: v,
-            modifier: m,
-            range: r,
+        .map_with_span(|(value, modifier), range| Self {
+            value,
+            modifier,
+            range,
         })
 });
 

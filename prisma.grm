@@ -30,7 +30,10 @@ Fn =
 
 // TODO: fn() as arg
 Args =
-    "(" Primary ("," Primary)* | NamedArg ("," NamedArg)* ")"
+    "(" Arg | ("," Arg)* ")"
+
+Arg =
+    Primary | Array | NamedArg
 
 NamedArg =
     Id ":" Value

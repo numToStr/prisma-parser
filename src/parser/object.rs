@@ -45,7 +45,7 @@ impl_parse!(Field, {
     Name::parse()
         .then_ignore(just(TokenType::Assign))
         .then(Value::parse())
-        .map(|(x, y)| Self { key: x, value: y })
+        .map(|(key, value)| Self { key, value })
 });
 
 #[derive(Debug)]

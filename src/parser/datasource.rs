@@ -16,9 +16,9 @@ pub struct Datasource {
 
 impl_parse!(Datasource, {
     just(TokenType::DataSource)
-        .map_with_span(|_, s| Id {
+        .map_with_span(|_, range| Id {
             value: Keyword::DataSource,
-            range: s,
+            range,
         })
         .then(Name::parse())
         .then(Fields::parse())

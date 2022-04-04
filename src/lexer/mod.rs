@@ -73,11 +73,7 @@ impl Lexer {
         let comment = just("//").then(take_until(just('\n'))).padded();
 
         // A single token can be one of the above
-        let token = attr
-            .or(string)
-            .or(num)
-            .or(ident)
-            .recover_with(skip_then_retry_until([]));
+        let token = choice((attr, string, num, ident)).recover_with(skip_then_retry_until([]));
 
         token
             .padded_by(comment.repeated())

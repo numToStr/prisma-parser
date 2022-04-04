@@ -16,9 +16,9 @@ pub struct Generator {
 
 impl_parse!(Generator, {
     just(TokenType::Generator)
-        .map_with_span(|_, s| Id {
+        .map_with_span(|_, range| Id {
             value: Keyword::Generator,
-            range: s,
+            range,
         })
         .then(Name::parse())
         .then(Fields::parse())

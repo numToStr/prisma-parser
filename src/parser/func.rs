@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use chumsky::{
     prelude::{choice, just},
     Parser,
@@ -5,42 +7,53 @@ use chumsky::{
 
 use crate::{impl_parse, TokenType};
 
-use super::terminal::{Name, Primary};
+use super::{
+    object::Array,
+    terminal::{Name, Primary},
+};
 
 #[derive(Debug)]
 pub struct Func {
     pub name: Name,
     pub args: Args,
+    pub range: Range<usize>,
 }
 
 impl_parse!(Func, {
     Name::parse()
         .then(Args::parse())
-        .map(|(x, y)| Self { name: x, args: y })
+        .map_with_span(|(x, y), r| Self {
+            name: x,
+            args: y,
+            range: r,
+        })
 });
 
 #[derive(Debug)]
-pub struct Args(Vec<Arg>);
+pub struct Args {
+    pub value: Vec<Arg>,
+    pub range: Range<usize>,
+}
 
 impl_parse!(Args, {
     Arg::parse()
+        .separated_by(just(TokenType::Comma))
         .delimited_by(just(TokenType::OpenParen), just(TokenType::CloseParen))
-        .map(Self)
+        .map_with_span(|v, r| Self { value: v, range: r })
 });
 
 #[derive(Debug)]
 pub enum Arg {
     Primary(Primary),
-    // Named{name: Id, value: Value}
+    Array(Array),
+    // Func(Func),
+    // Named(Named)
 }
 
-impl_parse!(Arg, Vec<Arg>, {
+impl_parse!(Arg, {
     choice((
-        Primary::parse()
-            .map(Self::Primary)
-            .separated_by(just(TokenType::Comma)),
-        // Value::parse()
-        //     .map(Self::Ref)
-        //     .separated_by(just(TokenType::Comma)),
+        Primary::parse().map(Self::Primary),
+        Array::parse().map(Self::Array),
+        // Func::parse().map(Self::Func),
     ))
 });

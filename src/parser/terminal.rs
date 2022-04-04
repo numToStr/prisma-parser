@@ -29,11 +29,11 @@ pub enum Primary {
 }
 
 impl_parse!(Primary, {
-    filter_map(|s, t| match t {
-        TokenType::Str(x) => Ok(Self::String { value: x, range: s }),
-        TokenType::Num(x) => Ok(Self::Number { value: x, range: s }),
-        TokenType::Bool(x) => Ok(Self::Bool { value: x, range: s }),
-        _ => Err(Simple::expected_input_found(s, None, Some(t))),
+    filter_map(|range, token| match token {
+        TokenType::Str(value) => Ok(Self::String { value, range }),
+        TokenType::Num(value) => Ok(Self::Number { value, range }),
+        TokenType::Bool(value) => Ok(Self::Bool { value, range }),
+        _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
 });
 
@@ -44,9 +44,9 @@ pub struct Name {
 }
 
 impl_parse!(Name, {
-    filter_map(|s, t| match t {
-        TokenType::Id(x) => Ok(Self { value: x, range: s }),
-        _ => Err(Simple::expected_input_found(s, None, Some(t))),
+    filter_map(|range, token| match token {
+        TokenType::Id(value) => Ok(Self { value, range }),
+        _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
 });
 
