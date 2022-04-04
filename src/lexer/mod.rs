@@ -1,5 +1,5 @@
-mod token;
-pub use token::*;
+mod token_type;
+pub use token_type::*;
 
 use std::ops::Range;
 
