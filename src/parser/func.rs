@@ -42,18 +42,22 @@ impl_parse!(Args, {
         .map_with_span(|v, r| Self { value: v, range: r })
 });
 
+// FIXME: handle more argument type
 #[derive(Debug)]
 pub enum Arg {
     Primary(Primary),
     Array(Array),
-    // Func(Func),
+    Ref(Name),
     // Named(Named)
+    // Func(Func),
 }
 
 impl_parse!(Arg, {
     choice((
         Primary::parse().map(Self::Primary),
         Array::parse().map(Self::Array),
+        Name::parse().map(Self::Ref),
+        // Named::parse().map(Self::Named),
         // Func::parse().map(Self::Func),
     ))
 });

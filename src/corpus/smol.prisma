@@ -14,19 +14,23 @@ enum Role {
   ADMIN
 }
 
-// model User {
-//     id      Int
-//     name    String?
-// }
-
 model User {
-    id            Int           // @id  @default(autoincrement())
-    createdAt     DateTime      // @default(now())
-    updatedAt     DateTime      // @updatedAt  @default(now())
-    email         String        // @unique
-    firstName     String?
-    lastName      String?
-    role          Role          // @default(OPERATIVE)
-    warehouse     Warehouse     // @relation(fields: [warehouseId], references: [id])
-    warehouseId   Int
+    id          Int         @id
+    username    String?     @unique @updatedAt
+    fullname    String?     @db.Varchar(123)
+    role        Role        @default(OPERATIVE, 123)
+
+    @@id()
 }
+
+// model User {
+//     id            Int           // @id  @default(autoincrement())
+//     createdAt     DateTime      // @default(now())
+//     updatedAt     DateTime      // @updatedAt  @default(now())
+//     email         String        // @unique
+//     firstName     String?
+//     lastName      String?
+//     role          Role          // @default(OPERATIVE)
+//     warehouse     Warehouse     // @relation(fields: [warehouseId], references: [id])
+//     warehouseId   Int
+// }

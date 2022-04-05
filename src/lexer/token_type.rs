@@ -17,11 +17,16 @@ pub enum TokenType {
     Comma,       // ,
 
     // Operators
-    Attr,     // @@
-    Prop,     // @
-    Assign,   // =
-    Optional, // ?
-    Dot,      // .
+    /// @@
+    BlockAttr,
+    /// @
+    FieldAttr,
+    /// =
+    Assign,
+    /// ?
+    Optional,
+    /// .
+    Dot,
 
     // literals
     Id(String), // user defined identified (like source/generator/model name, table fields)

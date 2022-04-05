@@ -7,7 +7,10 @@ use chumsky::{
 
 use crate::{impl_parse, TokenType};
 
-use super::terminal::{Id, Keyword, Name, Scalar};
+use super::{
+    func::Func,
+    terminal::{Id, Keyword, Name, Scalar},
+};
 
 #[derive(Debug)]
 pub struct Model {
@@ -34,43 +37,51 @@ impl_parse!(Model, {
 #[derive(Debug)]
 pub struct Columns {
     pub value: Vec<Column>,
+    pub attribute: Option<BlockAttr>,
     pub range: Range<usize>,
 }
 
 impl_parse!(Columns, {
     Column::parse()
         .repeated()
+        .then(BlockAttr::parse().or_not())
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|value, range| Self { value, range })
+        .map_with_span(|(value, attribute), range| Self {
+            value,
+            attribute,
+            range,
+        })
 });
 
 #[derive(Debug)]
 pub struct Column {
     pub name: Name,
     pub r#type: ColumnType,
-    // pub directives
+    pub attributes: Attributes,
     pub range: Range<usize>,
 }
 
 impl_parse!(Column, {
     Name::parse()
         .then(ColumnType::parse())
-        .map_with_span(|(name, t), range| Self {
+        .then(Attributes::parse())
+        .map_with_span(|((name, t), attributes), range| Self {
             name,
             r#type: t,
+            attributes,
             range,
         })
 });
 
 #[derive(Debug)]
 pub struct ColumnType {
-    pub value: Type,
+    pub value: ScalarOrRef,
     pub modifier: Option<Modifier>,
     pub range: Range<usize>,
 }
 
 impl_parse!(ColumnType, {
-    Type::parse()
+    ScalarOrRef::parse()
         .then(Modifier::parse())
         .map_with_span(|(value, modifier), range| Self {
             value,
@@ -80,12 +91,12 @@ impl_parse!(ColumnType, {
 });
 
 #[derive(Debug)]
-pub enum Type {
+pub enum ScalarOrRef {
     Scalar(Scalar),
     Ref(Name),
 }
 
-impl_parse!(Type, {
+impl_parse!(ScalarOrRef, {
     Scalar::parse()
         .map(Self::Scalar)
         .or(Name::parse().map(Self::Ref))
@@ -105,4 +116,66 @@ impl_parse!(Modifier, Option<Self>, {
             .to(Modifier::Array),
     ))
     .or_not()
+});
+
+#[derive(Debug)]
+pub struct Attributes {
+    pub value: Vec<FieldAttr>,
+    pub range: Range<usize>,
+}
+
+impl_parse!(Attributes, {
+    FieldAttr::parse()
+        .repeated()
+        .map_with_span(|value, range| Self { value, range })
+});
+
+#[derive(Debug)]
+pub struct FieldAttr {
+    pub r#type: AttrType,
+    pub range: Range<usize>,
+}
+
+impl_parse!(FieldAttr, {
+    just(TokenType::FieldAttr)
+        .then(AttrType::parse())
+        .map_with_span(|(_, t), range| Self { r#type: t, range })
+});
+
+#[derive(Debug)]
+pub enum AttrType {
+    Simple(Property),
+    Member { name: Name, property: Property },
+}
+
+impl_parse!(AttrType, {
+    choice((
+        Name::parse()
+            .then(just(TokenType::Dot))
+            .then(Property::parse())
+            .map(|((name, _), property)| Self::Member { name, property }),
+        Property::parse().map(Self::Simple),
+    ))
+});
+
+#[derive(Debug)]
+pub enum Property {
+    Name(Name),
+    Func(Func),
+}
+
+impl_parse!(Property, {
+    choice((Func::parse().map(Self::Func), Name::parse().map(Self::Name)))
+});
+
+#[derive(Debug)]
+pub struct BlockAttr {
+    pub range: Range<usize>,
+    pub value: Func,
+}
+
+impl_parse!(BlockAttr, {
+    just(TokenType::BlockAttr)
+        .then(Func::parse())
+        .map_with_span(|(_, value), range| Self { value, range })
 });

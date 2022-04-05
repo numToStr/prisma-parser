@@ -53,7 +53,6 @@ pub struct Array(Vec<ArrayItem>);
 
 impl_parse!(Array, {
     ArrayItem::parse()
-        // .separated_by(just(TokenType::Comma))
         .delimited_by(just(TokenType::OpenSquare), just(TokenType::CloseSquare))
         .map(Self)
 });

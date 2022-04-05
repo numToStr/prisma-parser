@@ -50,6 +50,7 @@ impl_parse!(Name, {
     })
 });
 
+// FIXME: handle `Unsupported`
 #[derive(Debug, Clone)]
 pub enum Scalar {
     String,

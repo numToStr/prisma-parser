@@ -23,8 +23,8 @@ impl Lexer {
     fn lex() -> impl Parser<char, Vec<Spanned>, Error = Simple<char>> {
         // parsers for operators
         let attr = choice((
-            just("@@").to(TokenType::Attr),
-            just('@').to(TokenType::Prop),
+            just("@@").to(TokenType::BlockAttr),
+            just('@').to(TokenType::FieldAttr),
             just('=').to(TokenType::Assign),
             just('?').to(TokenType::Optional),
             just('.').to(TokenType::Dot),
