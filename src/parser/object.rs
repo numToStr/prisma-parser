@@ -1,11 +1,9 @@
-use std::ops::Range;
-
 use chumsky::{
     prelude::{choice, just},
     Parser,
 };
 
-use crate::{impl_parse, TokenType};
+use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
     func::Func,
@@ -13,21 +11,18 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct Fields {
-    pub value: Vec<Field>,
-    pub range: Range<usize>,
-}
+pub struct Fields(Vec<Positioned<Field>>);
 
 impl_parse!(Fields, {
     Field::parse()
         .repeated()
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|value, range| Self { value, range })
+        .map_with_span(|value, range| Positioned::new(Self(value), range))
 });
 
 #[derive(Debug)]
 pub struct Field {
-    pub key: Name,
+    pub key: Positioned<Name>,
     pub value: Value,
 }
 
@@ -35,17 +30,17 @@ impl_parse!(Field, {
     Name::parse()
         .then_ignore(just(TokenType::Assign))
         .then(Value::parse())
-        .map(|(key, value)| Self { key, value })
+        .map_with_span(|(key, value), range| Positioned::new(Self { key, value }, range))
 });
 
 // FIXME: Maybe add function expression then remove Value
 #[derive(Debug)]
 pub enum Expr {
-    Array(Array),
-    Primary(Primary),
+    Array(Positioned<Array>),
+    Primary(Positioned<Primary>),
 }
 
-impl_parse!(Expr, {
+impl_parse!(Expr, Self, {
     choice((
         Array::parse().map(Self::Array),
         Primary::parse().map(Self::Primary),
@@ -56,34 +51,31 @@ impl_parse!(Expr, {
 #[derive(Debug)]
 pub enum Value {
     Expr(Expr),
-    Func(Func),
+    Func(Positioned<Func>),
 }
 
-impl_parse!(Value, {
+impl_parse!(Value, Self, {
     choice((Expr::parse().map(Self::Expr), Func::parse().map(Self::Func)))
 });
 
 #[derive(Debug)]
-pub struct Array {
-    pub items: Vec<ArrayItem>,
-    pub range: Range<usize>,
-}
+pub struct Array(Vec<ArrayItem>);
 
 impl_parse!(Array, {
     ArrayItem::parse()
         .separated_by(just(TokenType::Comma))
         .delimited_by(just(TokenType::OpenSquare), just(TokenType::CloseSquare))
-        .map_with_span(|items, range| Self { items, range })
+        .map_with_span(|items, range| Positioned::new(Self(items), range))
 });
 
 #[derive(Debug)]
 pub enum ArrayItem {
-    Primary(Primary),
-    Ref(Name),
+    Primary(Positioned<Primary>),
+    Ref(Positioned<Name>),
 }
 
 // NOTE: A neat thing about this function is that it won't allow mix datatypes
-impl_parse!(ArrayItem, {
+impl_parse!(ArrayItem, Self, {
     choice((
         Name::parse().map(Self::Ref),
         Primary::parse().map(Self::Primary),

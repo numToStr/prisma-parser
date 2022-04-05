@@ -26,14 +26,26 @@ macro_rules! impl_parse {
         }
     };
     ($id: ident, $body: expr) => {
-        crate::impl_parse!($id, Self, $body);
+        crate::impl_parse!($id, crate::Positioned<Self>, $body);
     };
 }
 
 #[derive(Debug)]
-pub struct Prisma {
+pub struct Positioned<T> {
     pub range: Range<usize>,
-    pub nodes: Vec<Node>,
+    pub node: T,
+}
+
+impl<T> Positioned<T> {
+    #[must_use]
+    pub fn new(node: T, range: Range<usize>) -> Self {
+        Self { node, range }
+    }
+}
+
+#[derive(Debug)]
+pub struct Prisma {
+    pub document: Positioned<Vec<Node>>,
 }
 
 impl Prisma {
@@ -45,7 +57,9 @@ impl Prisma {
         Node::parse()
             .repeated()
             // .recover_with(skip_then_retry_until([]))
-            .map_with_span(|nodes, range| Self { nodes, range })
+            .map_with_span(|nodes, range| Self {
+                document: Positioned::new(nodes, range),
+            })
             .parse(stream)
     }
 }

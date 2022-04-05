@@ -1,26 +1,25 @@
 use chumsky::{prelude::just, Parser};
 
-use crate::{impl_parse, TokenType};
+use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
     object::Fields,
-    terminal::{Id, Keyword, Name},
+    terminal::{Keyword, Name},
 };
 
 #[derive(Debug)]
 pub struct Generator {
-    pub this: Id,
-    pub name: Name,
-    pub fields: Fields,
+    pub this: Positioned<Keyword>,
+    pub name: Positioned<Name>,
+    pub fields: Positioned<Fields>,
 }
 
 impl_parse!(Generator, {
     just(TokenType::Generator)
-        .map_with_span(|_, range| Id {
-            value: Keyword::Generator,
-            range,
-        })
+        .map_with_span(|_, range| Positioned::new(Keyword::Generator, range))
         .then(Name::parse())
         .then(Fields::parse())
-        .map(|((this, name), fields)| Self { this, name, fields })
+        .map_with_span(|((this, name), fields), range| {
+            Positioned::new(Self { this, name, fields }, range)
+        })
 });

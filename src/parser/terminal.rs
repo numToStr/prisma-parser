@@ -1,11 +1,9 @@
-use std::ops::Range;
-
 use chumsky::{
     prelude::{choice, filter_map, just, Simple},
     Error, Parser,
 };
 
-use crate::{impl_parse, TokenType};
+use crate::{impl_parse, Positioned, TokenType};
 
 #[derive(Debug)]
 pub enum Keyword {
@@ -16,36 +14,28 @@ pub enum Keyword {
 }
 
 #[derive(Debug)]
-pub struct Id {
-    pub value: Keyword,
-    pub range: Range<usize>,
-}
-
-#[derive(Debug)]
 pub enum Primary {
-    String { value: String, range: Range<usize> },
-    Number { value: usize, range: Range<usize> },
-    Bool { value: bool, range: Range<usize> },
+    String(String),
+    Number(usize),
+    Bool(bool),
 }
 
 impl_parse!(Primary, {
     filter_map(|range, token| match token {
-        TokenType::Str(value) => Ok(Self::String { value, range }),
-        TokenType::Num(value) => Ok(Self::Number { value, range }),
-        TokenType::Bool(value) => Ok(Self::Bool { value, range }),
+        TokenType::Str(value) => Ok(Self::String(value)),
+        TokenType::Num(value) => Ok(Self::Number(value)),
+        TokenType::Bool(value) => Ok(Self::Bool(value)),
         _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
+    .map_with_span(Positioned::new)
 });
 
 #[derive(Debug)]
-pub struct Name {
-    pub value: String,
-    pub range: Range<usize>,
-}
+pub struct Name(String);
 
 impl_parse!(Name, {
     filter_map(|range, token| match token {
-        TokenType::Id(value) => Ok(Self { value, range }),
+        TokenType::Id(value) => Ok(Positioned::new(Self(value), range)),
         _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
 });
@@ -77,4 +67,5 @@ impl_parse!(Scalar, {
         just(TokenType::Json).to(Scalar::Json),
         just(TokenType::Bytes).to(Scalar::Bytes),
     ))
+    .map_with_span(Positioned::new)
 });

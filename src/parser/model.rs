@@ -1,102 +1,97 @@
-use std::ops::Range;
-
 use chumsky::{
     prelude::{choice, just},
     Parser,
 };
 
-use crate::{impl_parse, TokenType};
+use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
     func::Func,
-    terminal::{Id, Keyword, Name, Scalar},
+    terminal::{Keyword, Name, Scalar},
 };
 
 #[derive(Debug)]
 pub struct Model {
-    pub this: Id,
-    pub name: Name,
-    pub columns: Columns,
+    pub this: Positioned<Keyword>,
+    pub name: Positioned<Name>,
+    pub columns: Positioned<Columns>,
 }
 
 impl_parse!(Model, {
     just(TokenType::Model)
-        .map_with_span(|_, range| Id {
-            value: Keyword::Model,
-            range,
-        })
+        .map_with_span(|_, range| Positioned::new(Keyword::Model, range))
         .then(Name::parse())
         .then(Columns::parse())
-        .map(|((this, name), columns)| Self {
-            this,
-            name,
-            columns,
+        .map_with_span(|((this, name), columns), range| {
+            Positioned::new(
+                Self {
+                    this,
+                    name,
+                    columns,
+                },
+                range,
+            )
         })
 });
 
 #[derive(Debug)]
 pub struct Columns {
-    pub value: Vec<Column>,
-    pub attribute: Option<BlockAttr>,
-    pub range: Range<usize>,
+    pub value: Vec<Positioned<Column>>,
+    pub attributes: Positioned<BlockAttrs>,
 }
 
 impl_parse!(Columns, {
     Column::parse()
         .repeated()
-        .then(BlockAttr::parse().or_not())
+        .then(BlockAttrs::parse())
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|(value, attribute), range| Self {
-            value,
-            attribute,
-            range,
+        .map_with_span(|(value, attributes), range| {
+            Positioned::new(Self { value, attributes }, range)
         })
 });
 
 #[derive(Debug)]
 pub struct Column {
-    pub name: Name,
-    pub r#type: ColumnType,
-    pub attributes: Attributes,
-    pub range: Range<usize>,
+    pub name: Positioned<Name>,
+    pub r#type: Positioned<ColumnType>,
+    pub attributes: Positioned<Attributes>,
 }
 
 impl_parse!(Column, {
     Name::parse()
         .then(ColumnType::parse())
         .then(Attributes::parse())
-        .map_with_span(|((name, t), attributes), range| Self {
-            name,
-            r#type: t,
-            attributes,
-            range,
+        .map_with_span(|((name, t), attributes), range| {
+            Positioned::new(
+                Self {
+                    name,
+                    r#type: t,
+                    attributes,
+                },
+                range,
+            )
         })
 });
 
 #[derive(Debug)]
 pub struct ColumnType {
     pub value: ScalarOrRef,
-    pub modifier: Option<Modifier>,
-    pub range: Range<usize>,
+    pub modifier: Option<Positioned<Modifier>>,
 }
 
 impl_parse!(ColumnType, {
     ScalarOrRef::parse()
         .then(Modifier::parse())
-        .map_with_span(|(value, modifier), range| Self {
-            value,
-            modifier,
-            range,
-        })
+        .map_with_span(|(value, modifier), range| Positioned::new(Self { value, modifier }, range))
 });
 
 #[derive(Debug)]
 pub enum ScalarOrRef {
-    Scalar(Scalar),
-    Ref(Name),
+    Scalar(Positioned<Scalar>),
+    Ref(Positioned<Name>),
 }
 
-impl_parse!(ScalarOrRef, {
+impl_parse!(ScalarOrRef, Self, {
     Scalar::parse()
         .map(Self::Scalar)
         .or(Name::parse().map(Self::Ref))
@@ -108,74 +103,64 @@ pub enum Modifier {
     Optional,
 }
 
-impl_parse!(Modifier, Option<Self>, {
+impl_parse!(Modifier, Option<Positioned<Self>>, {
     choice((
         just(TokenType::Optional).to(Modifier::Optional),
         just(TokenType::OpenSquare)
             .then(just(TokenType::CloseSquare))
             .to(Modifier::Array),
     ))
+    .map_with_span(Positioned::new)
     .or_not()
 });
 
 #[derive(Debug)]
-pub struct Attributes {
-    pub value: Vec<FieldAttr>,
-    pub range: Range<usize>,
-}
+pub struct Attributes(Vec<Positioned<Attribute>>);
 
 impl_parse!(Attributes, {
-    FieldAttr::parse()
+    Attribute::parse()
         .repeated()
-        .map_with_span(|value, range| Self { value, range })
+        .map_with_span(|value, range| Positioned::new(Self(value), range))
 });
 
 #[derive(Debug)]
-pub struct FieldAttr {
-    pub r#type: AttrType,
-    pub range: Range<usize>,
-}
-
-impl_parse!(FieldAttr, {
-    just(TokenType::FieldAttr)
-        .then(AttrType::parse())
-        .map_with_span(|(_, t), range| Self { r#type: t, range })
-});
-
-#[derive(Debug)]
-pub enum AttrType {
+pub enum Attribute {
     Simple(Property),
-    Member { name: Name, property: Property },
+    Member {
+        name: Positioned<Name>,
+        property: Property,
+    },
 }
 
-impl_parse!(AttrType, {
-    choice((
-        Name::parse()
-            .then(just(TokenType::Dot))
-            .then(Property::parse())
-            .map(|((name, _), property)| Self::Member { name, property }),
-        Property::parse().map(Self::Simple),
-    ))
+impl_parse!(Attribute, {
+    just(TokenType::FieldAttr)
+        .then(choice((
+            Name::parse()
+                .then(just(TokenType::Dot))
+                .then(Property::parse())
+                .map(|((name, _), property)| Self::Member { name, property }),
+            Property::parse().map(Self::Simple),
+        )))
+        .map_with_span(|(_, node), range| Positioned::new(node, range))
 });
 
 #[derive(Debug)]
 pub enum Property {
-    Name(Name),
-    Func(Func),
+    Name(Positioned<Name>),
+    Func(Positioned<Func>),
 }
 
-impl_parse!(Property, {
+impl_parse!(Property, Self, {
     choice((Func::parse().map(Self::Func), Name::parse().map(Self::Name)))
 });
 
 #[derive(Debug)]
-pub struct BlockAttr {
-    pub range: Range<usize>,
-    pub value: Func,
-}
+pub struct BlockAttrs(Vec<Positioned<Func>>);
 
-impl_parse!(BlockAttr, {
+impl_parse!(BlockAttrs, {
     just(TokenType::BlockAttr)
         .then(Func::parse())
-        .map_with_span(|(_, value), range| Self { value, range })
+        .map(|(_, func)| func)
+        .repeated()
+        .map_with_span(|value, range| Positioned::new(Self(value), range))
 });
