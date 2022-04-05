@@ -7,10 +7,7 @@ use chumsky::{
 
 use crate::{impl_parse, TokenType};
 
-use super::{
-    object::Array,
-    terminal::{Name, Primary},
-};
+use super::{object::Expr, terminal::Name};
 
 #[derive(Debug)]
 pub struct Func {
@@ -42,22 +39,34 @@ impl_parse!(Args, {
         .map_with_span(|v, r| Self { value: v, range: r })
 });
 
-// FIXME: handle more argument type
+// FIXME: handle function
 #[derive(Debug)]
 pub enum Arg {
-    Primary(Primary),
-    Array(Array),
+    Expr(Expr),
+    Named(Named),
     Ref(Name),
-    // Named(Named)
     // Func(Func),
 }
 
 impl_parse!(Arg, {
     choice((
-        Primary::parse().map(Self::Primary),
-        Array::parse().map(Self::Array),
+        Expr::parse().map(Self::Expr),
+        Named::parse().map(Self::Named),
         Name::parse().map(Self::Ref),
-        // Named::parse().map(Self::Named),
         // Func::parse().map(Self::Func),
     ))
+});
+
+#[derive(Debug)]
+pub struct Named {
+    pub key: Name,
+    pub value: Expr,
+    pub range: Range<usize>,
+}
+
+impl_parse!(Named, {
+    Name::parse()
+        .then(just(TokenType::Colon))
+        .then(Expr::parse())
+        .map_with_span(|((key, _), value), range| Self { key, value, range })
 });

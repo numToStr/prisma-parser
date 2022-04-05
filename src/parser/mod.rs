@@ -26,13 +26,7 @@ macro_rules! impl_parse {
         }
     };
     ($id: ident, $body: expr) => {
-        impl $id {
-            pub fn parse(
-            ) -> impl chumsky::Parser<TokenType, Self, Error = chumsky::prelude::Simple<TokenType>>
-            {
-                $body
-            }
-        }
+        crate::impl_parse!($id, Self, $body);
     };
 }
 

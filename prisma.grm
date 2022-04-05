@@ -23,7 +23,10 @@ Field =
     Id "=" Value
 
 Value =
-    Primary | Array | Fn
+    Expr | Fn
+
+Expr =
+    Primary | Array
 
 Fn =
     Id Args
@@ -33,10 +36,10 @@ Args =
     "(" Arg | ("," Arg)* ")"
 
 Arg =
-    Primary | Array | NamedArg
+    Expr | NamedArg
 
 NamedArg =
-    Id ":" Value
+    Id ":" Expr
 
 Column =
     Id ColumnType Attributes?

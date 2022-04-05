@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use chumsky::{
     prelude::{choice, just},
     Parser,
@@ -11,28 +13,16 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct Fields(Vec<Field>);
+pub struct Fields {
+    pub value: Vec<Field>,
+    pub range: Range<usize>,
+}
 
 impl_parse!(Fields, {
     Field::parse()
         .repeated()
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map(Self)
-});
-
-#[derive(Debug)]
-pub enum Value {
-    Primary(Primary),
-    Array(Array),
-    Func(Func),
-}
-
-impl_parse!(Value, {
-    choice((
-        Primary::parse().map(Self::Primary),
-        Array::parse().map(Self::Array),
-        Func::parse().map(Self::Func),
-    ))
+        .map_with_span(|value, range| Self { value, range })
 });
 
 #[derive(Debug)]
@@ -48,29 +38,54 @@ impl_parse!(Field, {
         .map(|(key, value)| Self { key, value })
 });
 
+// FIXME: Maybe add function expression then remove Value
 #[derive(Debug)]
-pub struct Array(Vec<ArrayItem>);
+pub enum Expr {
+    Array(Array),
+    Primary(Primary),
+}
+
+impl_parse!(Expr, {
+    choice((
+        Array::parse().map(Self::Array),
+        Primary::parse().map(Self::Primary),
+    ))
+});
+
+// TODO: interop with Expr
+#[derive(Debug)]
+pub enum Value {
+    Expr(Expr),
+    Func(Func),
+}
+
+impl_parse!(Value, {
+    choice((Expr::parse().map(Self::Expr), Func::parse().map(Self::Func)))
+});
+
+#[derive(Debug)]
+pub struct Array {
+    pub items: Vec<ArrayItem>,
+    pub range: Range<usize>,
+}
 
 impl_parse!(Array, {
     ArrayItem::parse()
+        .separated_by(just(TokenType::Comma))
         .delimited_by(just(TokenType::OpenSquare), just(TokenType::CloseSquare))
-        .map(Self)
+        .map_with_span(|items, range| Self { items, range })
 });
 
 #[derive(Debug)]
 pub enum ArrayItem {
-    Ref(Name),
     Primary(Primary),
+    Ref(Name),
 }
 
 // NOTE: A neat thing about this function is that it won't allow mix datatypes
-impl_parse!(ArrayItem, Vec<ArrayItem>, {
+impl_parse!(ArrayItem, {
     choice((
-        Primary::parse()
-            .map(Self::Primary)
-            .separated_by(just(TokenType::Comma)),
-        Name::parse()
-            .map(Self::Ref)
-            .separated_by(just(TokenType::Comma)),
+        Name::parse().map(Self::Ref),
+        Primary::parse().map(Self::Primary),
     ))
 });
