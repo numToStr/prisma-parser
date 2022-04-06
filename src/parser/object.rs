@@ -7,7 +7,7 @@ use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
     func::Func,
-    terminal::{Name, Primary},
+    terminal::{Literal, Name},
 };
 
 #[derive(Debug)]
@@ -37,13 +37,13 @@ impl_parse!(Field, {
 #[derive(Debug)]
 pub enum Expr {
     Array(Positioned<Array>),
-    Primary(Positioned<Primary>),
+    Literal(Positioned<Literal>),
 }
 
 impl_parse!(Expr, Self, {
     choice((
         Array::parse().map(Self::Array),
-        Primary::parse().map(Self::Primary),
+        Literal::parse().map(Self::Literal),
     ))
 });
 
@@ -70,7 +70,7 @@ impl_parse!(Array, {
 
 #[derive(Debug)]
 pub enum ArrayItem {
-    Primary(Positioned<Primary>),
+    Literal(Positioned<Literal>),
     Ref(Positioned<Name>),
 }
 
@@ -78,6 +78,6 @@ pub enum ArrayItem {
 impl_parse!(ArrayItem, Self, {
     choice((
         Name::parse().map(Self::Ref),
-        Primary::parse().map(Self::Primary),
+        Literal::parse().map(Self::Literal),
     ))
 });

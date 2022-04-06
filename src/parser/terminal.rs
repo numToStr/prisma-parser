@@ -14,13 +14,13 @@ pub enum Keyword {
 }
 
 #[derive(Debug)]
-pub enum Primary {
+pub enum Literal {
     String(String),
     Number(usize),
     Bool(bool),
 }
 
-impl_parse!(Primary, {
+impl_parse!(Literal, {
     filter_map(|range, token| match token {
         TokenType::Str(value) => Ok(Self::String(value)),
         TokenType::Num(value) => Ok(Self::Number(value)),

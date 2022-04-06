@@ -5,47 +5,49 @@ Prisma =
     | Enum
 
 Datasource =
-    "datasource" Id Object
+    "datasource" Name Object
 
 Generator =
-    "generator" Id Object
+    "generator" Name Object
 
 Model =
-    "model" Id "{" Column+ "}"
+    "model" Name Block
 
 Enum =
-    "enum" Id "{" Id+ "}"
+    "enum" Name Varaints
 
 Object =
     "{" Field+ "}"
 
-Field =
-    Id "=" Value
+Block =
+    "{" Column+ "}"
 
-Value =
-    Expr | Fn
+Varaints =
+    "{" Name+ "}"
+
+Field =
+    Name "=" Expr
 
 Expr =
-    Primary | Array
+    Literal | Array | Fn
 
 Fn =
-    Id Args
+    Name Args
 
-// TODO: fn() as arg
 Args =
-    "(" Arg | ("," Arg)* ")"
+    "(" Arg ("," Arg)* ")"
 
 Arg =
     Expr | NamedArg
 
 NamedArg =
-    Id ":" Expr
+    Name ":" Expr
 
 Column =
-    Id ColumnType Attributes?
+    Name ColumnType Attributes?
 
 ColumnType =
-    (Scalar | ReferenceType) Modifier
+    (Scalar | Ref) Modifier
 
 Modifier =
     "[" "]" | ("?")?
@@ -59,10 +61,10 @@ AttributeName =
 Attributes =
     Attribute*
 
-Id =
+Name =
     /^[a-zA-Z0-1_]/
 
-Primary =
+Literal =
     STRING | NUMBER | BOOLEAN
 
 Scalar =
@@ -75,13 +77,13 @@ Scalar =
     | "DateTime"
     | "Json"
     | "Bytes"
-    | "Unsupported" "(" Primary ")"
+    | "Unsupported" "(" Literal ")"
 
-ReferenceType =
-    Id
+Ref =
+    Name
 
 Array =
     "[" ArrayItem ("," ArrayItem)* "]"
 
 ArrayItem =
-    ReferenceType | Primary
+    Ref | Literal
