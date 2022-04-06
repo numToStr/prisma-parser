@@ -55,7 +55,7 @@ pub struct Named {
 
 impl_parse!(Named, {
     Name::parse()
-        .then(just(TokenType::Colon))
+        .then_ignore(just(TokenType::Colon))
         .then(Expr::parse())
-        .map_with_span(|((key, _), value), range| Positioned::new(Self { key, value }, range))
+        .map_with_span(|(key, value), range| Positioned::new(Self { key, value }, range))
 });
