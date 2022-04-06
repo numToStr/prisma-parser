@@ -9,7 +9,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d02796e4586c6c41aeb68eae9bfb4558a522c35f1430c14b40136c3706e09e4"
 
 [[package]]
-name = "pp"
+name = "prisma-parser"
 version = "0.1.0"
 dependencies = [
  "chumsky",
