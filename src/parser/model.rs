@@ -162,11 +162,19 @@ impl_parse!(Property, Self, {
 });
 
 #[derive(Debug)]
-pub struct BlockAttrs(Vec<Positioned<Func>>);
+pub struct BlockAttrs(Vec<Positioned<BlockAttr>>);
 
 impl_parse!(BlockAttrs, {
+    BlockAttr::parse()
+        .repeated()
+        .map_with_span(|value, range| Positioned::new(Self(value), range))
+});
+
+#[derive(Debug)]
+pub struct BlockAttr(Positioned<Func>);
+
+impl_parse!(BlockAttr, {
     just(TokenType::BlockAttr)
         .ignore_then(Func::parse())
-        .repeated()
         .map_with_span(|value, range| Positioned::new(Self(value), range))
 });

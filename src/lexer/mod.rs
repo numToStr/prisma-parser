@@ -70,9 +70,9 @@ impl Lexer {
             "Json" => TokenType::Json,
             "Bytes" => TokenType::Bytes,
             "Unsupported" => TokenType::Unsupported,
-            // everything else is user defined
             "true" => TokenType::Bool(true),
             "false" => TokenType::Bool(false),
+            // everything else is user defined
             _ => TokenType::Id(ident),
         });
 
@@ -84,7 +84,7 @@ impl Lexer {
 
         token
             .padded_by(comment.repeated())
-            .map_with_span(|ty, range| (ty, range))
+            .map_with_span(|token, range| (token, range))
             .padded()
             .repeated()
     }
