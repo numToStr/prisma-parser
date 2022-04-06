@@ -6,7 +6,7 @@ use super::terminal::{Keyword, Name};
 
 #[derive(Debug)]
 pub struct Enum {
-    pub this: Positioned<Keyword>,
+    pub token: Positioned<Keyword>,
     pub name: Positioned<Name>,
     pub variants: Positioned<Variants>,
 }
@@ -16,8 +16,8 @@ impl_parse!(Enum, {
         .map_with_span(|_, range| Positioned::new(Keyword::Enum, range))
         .then(Name::parse())
         .then(Variants::parse())
-        .map(|((this, name), variants)| Enum {
-            this,
+        .map(|((token, name), variants)| Enum {
+            token,
             name,
             variants,
         })

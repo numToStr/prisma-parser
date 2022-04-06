@@ -12,7 +12,7 @@ use super::{
 
 #[derive(Debug)]
 pub struct Model {
-    pub this: Positioned<Keyword>,
+    pub token: Positioned<Keyword>,
     pub name: Positioned<Name>,
     pub block: Positioned<Block>,
 }
@@ -22,8 +22,8 @@ impl_parse!(Model, {
         .map_with_span(|_, range| Positioned::new(Keyword::Model, range))
         .then(Name::parse())
         .then(Block::parse())
-        .map_with_span(|((this, name), block), range| {
-            Positioned::new(Self { this, name, block }, range)
+        .map_with_span(|((token, name), block), range| {
+            Positioned::new(Self { token, name, block }, range)
         })
 });
 
@@ -141,14 +141,14 @@ pub enum Attribute {
 
 impl_parse!(Attribute, {
     just(TokenType::FieldAttr)
-        .then(choice((
+        .ignore_then(choice((
             Name::parse()
-                .then(just(TokenType::Dot))
+                .then_ignore(just(TokenType::Dot))
                 .then(Property::parse())
-                .map(|((name, _), property)| Self::Member { name, property }),
+                .map(|(name, property)| Self::Member { name, property }),
             Property::parse().map(Self::Simple),
         )))
-        .map_with_span(|(_, node), range| Positioned::new(node, range))
+        .map_with_span(Positioned::new)
 });
 
 #[derive(Debug)]
@@ -166,8 +166,7 @@ pub struct BlockAttrs(Vec<Positioned<Func>>);
 
 impl_parse!(BlockAttrs, {
     just(TokenType::BlockAttr)
-        .then(Func::parse())
-        .map(|(_, func)| func)
+        .ignore_then(Func::parse())
         .repeated()
         .map_with_span(|value, range| Positioned::new(Self(value), range))
 });
