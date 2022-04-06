@@ -61,8 +61,15 @@ impl Lexer {
             "enum" => TokenType::Enum,
             // datatypes
             "String" => TokenType::String,
+            "Boolean" => TokenType::Boolean,
             "Int" => TokenType::Int,
+            "BigInt" => TokenType::BigInt,
+            "Float" => TokenType::Float,
+            "Decimal" => TokenType::Decimal,
             "DateTime" => TokenType::DateTime,
+            "Json" => TokenType::Json,
+            "Bytes" => TokenType::Bytes,
+            "Unsupported" => TokenType::Unsupported,
             // everything else is user defined
             "true" => TokenType::Bool(true),
             "false" => TokenType::Bool(false),
