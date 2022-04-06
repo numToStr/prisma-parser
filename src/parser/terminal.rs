@@ -1,6 +1,6 @@
 use chumsky::{
     prelude::{choice, filter_map, just, Simple},
-    Error, Parser,
+    select, Error, Parser,
 };
 
 use crate::{impl_parse, Positioned, TokenType};
@@ -40,7 +40,6 @@ impl_parse!(Name, {
     })
 });
 
-// FIXME: handle `Unsupported`
 #[derive(Debug, Clone)]
 pub enum Scalar {
     String,
@@ -52,20 +51,26 @@ pub enum Scalar {
     DateTime,
     Json,
     Bytes,
-    // Unsupported
+    Unsupported(String),
 }
 
 impl_parse!(Scalar, {
     choice((
-        just(TokenType::String).to(Scalar::String),
-        just(TokenType::Boolean).to(Scalar::Boolean),
-        just(TokenType::Int).to(Scalar::Int),
-        just(TokenType::BigInt).to(Scalar::BigInt),
-        just(TokenType::Float).to(Scalar::Float),
-        just(TokenType::Decimal).to(Scalar::Decimal),
-        just(TokenType::DateTime).to(Scalar::DateTime),
-        just(TokenType::Json).to(Scalar::Json),
-        just(TokenType::Bytes).to(Scalar::Bytes),
+        just(TokenType::String).to(Self::String),
+        just(TokenType::Boolean).to(Self::Boolean),
+        just(TokenType::Int).to(Self::Int),
+        just(TokenType::BigInt).to(Self::BigInt),
+        just(TokenType::Float).to(Self::Float),
+        just(TokenType::Decimal).to(Self::Decimal),
+        just(TokenType::DateTime).to(Self::DateTime),
+        just(TokenType::Json).to(Self::Json),
+        just(TokenType::Bytes).to(Self::Bytes),
+        just(TokenType::Unsupported).ignore_then(
+            select! {
+                TokenType::Str(x) => Self::Unsupported(x)
+            }
+            .delimited_by(just(TokenType::OpenParen), just(TokenType::CloseParen)),
+        ),
     ))
     .map_with_span(Positioned::new)
 });

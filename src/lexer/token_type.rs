@@ -44,4 +44,5 @@ pub enum TokenType {
     DateTime,
     Json,
     Bytes,
+    Unsupported,
 }
