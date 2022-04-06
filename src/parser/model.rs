@@ -14,20 +14,34 @@ use super::{
 pub struct Model {
     pub this: Positioned<Keyword>,
     pub name: Positioned<Name>,
-    pub columns: Positioned<Columns>,
+    pub block: Positioned<Block>,
 }
 
 impl_parse!(Model, {
     just(TokenType::Model)
         .map_with_span(|_, range| Positioned::new(Keyword::Model, range))
         .then(Name::parse())
-        .then(Columns::parse())
-        .map_with_span(|((this, name), columns), range| {
+        .then(Block::parse())
+        .map_with_span(|((this, name), block), range| {
+            Positioned::new(Self { this, name, block }, range)
+        })
+});
+
+#[derive(Debug)]
+pub struct Block {
+    pub columns: Positioned<Columns>,
+    pub attributes: Positioned<BlockAttrs>,
+}
+
+impl_parse!(Block, {
+    Columns::parse()
+        .then(BlockAttrs::parse())
+        .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
+        .map_with_span(|(columns, attributes), range| {
             Positioned::new(
                 Self {
-                    this,
-                    name,
                     columns,
+                    attributes,
                 },
                 range,
             )
@@ -35,25 +49,18 @@ impl_parse!(Model, {
 });
 
 #[derive(Debug)]
-pub struct Columns {
-    pub value: Vec<Positioned<Column>>,
-    pub attributes: Positioned<BlockAttrs>,
-}
+pub struct Columns(Vec<Positioned<Column>>);
 
 impl_parse!(Columns, {
     Column::parse()
         .repeated()
-        .then(BlockAttrs::parse())
-        .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|(value, attributes), range| {
-            Positioned::new(Self { value, attributes }, range)
-        })
+        .map_with_span(|node, range| Positioned::new(Self(node), range))
 });
 
 #[derive(Debug)]
 pub struct Column {
     pub name: Positioned<Name>,
-    pub r#type: Positioned<ColumnType>,
+    pub scalar: Positioned<ColumnType>,
     pub attributes: Positioned<Attributes>,
 }
 
@@ -61,11 +68,11 @@ impl_parse!(Column, {
     Name::parse()
         .then(ColumnType::parse())
         .then(Attributes::parse())
-        .map_with_span(|((name, t), attributes), range| {
+        .map_with_span(|((name, scalar), attributes), range| {
             Positioned::new(
                 Self {
                     name,
-                    r#type: t,
+                    scalar,
                     attributes,
                 },
                 range,
@@ -75,23 +82,23 @@ impl_parse!(Column, {
 
 #[derive(Debug)]
 pub struct ColumnType {
-    pub value: ScalarOrRef,
+    pub value: ScalarType,
     pub modifier: Option<Positioned<Modifier>>,
 }
 
 impl_parse!(ColumnType, {
-    ScalarOrRef::parse()
+    ScalarType::parse()
         .then(Modifier::parse())
         .map_with_span(|(value, modifier), range| Positioned::new(Self { value, modifier }, range))
 });
 
 #[derive(Debug)]
-pub enum ScalarOrRef {
+pub enum ScalarType {
     Scalar(Positioned<Scalar>),
     Ref(Positioned<Name>),
 }
 
-impl_parse!(ScalarOrRef, Self, {
+impl_parse!(ScalarType, Self, {
     Scalar::parse()
         .map(Self::Scalar)
         .or(Name::parse().map(Self::Ref))
