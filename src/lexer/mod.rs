@@ -9,7 +9,7 @@ use chumsky::{
     Parser,
 };
 
-pub type Spanned = (TokenType, Range<usize>);
+type Spanned = (TokenType, Range<usize>);
 
 #[derive(Debug)]
 pub struct Lexer;

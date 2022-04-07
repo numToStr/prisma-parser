@@ -26,17 +26,17 @@ macro_rules! impl_parse {
         }
     };
     ($id: ident, $body: expr) => {
-        crate::impl_parse!($id, crate::Positioned<Self>, $body);
+        crate::impl_parse!($id, crate::Spanned<Self>, $body);
     };
 }
 
 #[derive(Debug)]
-pub struct Positioned<T> {
+pub struct Spanned<T> {
     pub range: Range<usize>,
     pub node: T,
 }
 
-impl<T> Positioned<T> {
+impl<T> Spanned<T> {
     #[must_use]
     pub fn new(node: T, range: Range<usize>) -> Self {
         Self { node, range }
@@ -45,7 +45,7 @@ impl<T> Positioned<T> {
 
 #[derive(Debug)]
 pub struct Prisma {
-    pub document: Positioned<Vec<Node>>,
+    pub document: Spanned<Vec<Node>>,
 }
 
 impl Prisma {
@@ -58,7 +58,7 @@ impl Prisma {
             .repeated()
             // .recover_with(skip_then_retry_until([]))
             .map_with_span(|nodes, range| Self {
-                document: Positioned::new(nodes, range),
+                document: Spanned::new(nodes, range),
             })
             .parse(stream)
     }

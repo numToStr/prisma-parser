@@ -3,7 +3,7 @@ use chumsky::{
     select, Error, Parser,
 };
 
-use crate::{impl_parse, Positioned, TokenType};
+use crate::{impl_parse, Spanned, TokenType};
 
 #[derive(Debug)]
 pub enum Keyword {
@@ -27,7 +27,7 @@ impl_parse!(Literal, {
         TokenType::Bool(value) => Ok(Self::Bool(value)),
         _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
-    .map_with_span(Positioned::new)
+    .map_with_span(Spanned::new)
 });
 
 #[derive(Debug)]
@@ -35,7 +35,7 @@ pub struct Name(String);
 
 impl_parse!(Name, {
     filter_map(|range, token| match token {
-        TokenType::Id(value) => Ok(Positioned::new(Self(value), range)),
+        TokenType::Id(value) => Ok(Spanned::new(Self(value), range)),
         _ => Err(Simple::expected_input_found(range, None, Some(token))),
     })
 });
@@ -72,5 +72,5 @@ impl_parse!(Scalar, {
             .delimited_by(just(TokenType::OpenParen), just(TokenType::CloseParen)),
         ),
     ))
-    .map_with_span(Positioned::new)
+    .map_with_span(Spanned::new)
 });

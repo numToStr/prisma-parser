@@ -1,15 +1,15 @@
 use chumsky::{prelude::choice, Parser};
 
-use crate::{impl_parse, Positioned, TokenType};
+use crate::{impl_parse, Spanned, TokenType};
 
 use super::{datasource::Datasource, generator::Generator, model::Model, r#enum::Enum};
 
 #[derive(Debug)]
 pub enum Node {
-    Datasource(Positioned<Datasource>),
-    Generator(Positioned<Generator>),
-    Model(Positioned<Model>),
-    Enum(Positioned<Enum>),
+    Datasource(Spanned<Datasource>),
+    Generator(Spanned<Generator>),
+    Model(Spanned<Model>),
+    Enum(Spanned<Enum>),
 }
 
 impl_parse!(Node, Self, {

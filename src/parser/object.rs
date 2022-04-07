@@ -3,7 +3,7 @@ use chumsky::{
     Parser,
 };
 
-use crate::{impl_parse, Positioned, TokenType};
+use crate::{impl_parse, Spanned, TokenType};
 
 use super::{
     func::Call,
@@ -11,18 +11,18 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct Fields(Vec<Positioned<Field>>);
+pub struct Fields(Vec<Spanned<Field>>);
 
 impl_parse!(Fields, {
     Field::parse()
         .repeated()
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
-        .map_with_span(|value, range| Positioned::new(Self(value), range))
+        .map_with_span(|value, range| Spanned::new(Self(value), range))
 });
 
 #[derive(Debug)]
 pub struct Field {
-    pub key: Positioned<Name>,
+    pub key: Spanned<Name>,
     pub value: Value,
 }
 
@@ -30,14 +30,14 @@ impl_parse!(Field, {
     Name::parse()
         .then_ignore(just(TokenType::Assign))
         .then(Value::parse())
-        .map_with_span(|(key, value), range| Positioned::new(Self { key, value }, range))
+        .map_with_span(|(key, value), range| Spanned::new(Self { key, value }, range))
 });
 
 // FIXME: Maybe add function expression then remove Value
 #[derive(Debug)]
 pub enum Expr {
-    Array(Positioned<Array>),
-    Literal(Positioned<Literal>),
+    Array(Spanned<Array>),
+    Literal(Spanned<Literal>),
 }
 
 impl_parse!(Expr, Self, {
@@ -51,7 +51,7 @@ impl_parse!(Expr, Self, {
 #[derive(Debug)]
 pub enum Value {
     Expr(Expr),
-    Call(Positioned<Call>),
+    Call(Spanned<Call>),
 }
 
 impl_parse!(Value, Self, {
@@ -65,13 +65,13 @@ impl_parse!(Array, {
     ArrayItem::parse()
         .separated_by(just(TokenType::Comma))
         .delimited_by(just(TokenType::OpenSquare), just(TokenType::CloseSquare))
-        .map_with_span(|items, range| Positioned::new(Self(items), range))
+        .map_with_span(|items, range| Spanned::new(Self(items), range))
 });
 
 #[derive(Debug)]
 pub enum ArrayItem {
-    Literal(Positioned<Literal>),
-    Ref(Positioned<Name>),
+    Literal(Spanned<Literal>),
+    Ref(Spanned<Name>),
 }
 
 // NOTE: A neat thing about this function is that it won't allow mix datatypes

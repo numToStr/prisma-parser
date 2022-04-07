@@ -1,6 +1,6 @@
 use chumsky::{prelude::just, Parser};
 
-use crate::{impl_parse, Positioned, TokenType};
+use crate::{impl_parse, Spanned, TokenType};
 
 use super::{
     object::Fields,
@@ -9,18 +9,18 @@ use super::{
 
 #[derive(Debug)]
 pub struct Generator {
-    pub token: Positioned<Keyword>,
-    pub name: Positioned<Name>,
-    pub fields: Positioned<Fields>,
+    pub token: Spanned<Keyword>,
+    pub name: Spanned<Name>,
+    pub fields: Spanned<Fields>,
 }
 
 impl_parse!(Generator, {
     just(TokenType::Generator)
-        .map_with_span(|_, range| Positioned::new(Keyword::Generator, range))
+        .map_with_span(|_, range| Spanned::new(Keyword::Generator, range))
         .then(Name::parse())
         .then(Fields::parse())
         .map_with_span(|((token, name), fields), range| {
-            Positioned::new(
+            Spanned::new(
                 Self {
                     token,
                     name,
