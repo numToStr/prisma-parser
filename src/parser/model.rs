@@ -6,7 +6,7 @@ use chumsky::{
 use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
-    func::Func,
+    func::Call,
     terminal::{Keyword, Name, Scalar},
 };
 
@@ -154,11 +154,11 @@ impl_parse!(Attribute, {
 #[derive(Debug)]
 pub enum Property {
     Name(Positioned<Name>),
-    Func(Positioned<Func>),
+    Call(Positioned<Call>),
 }
 
 impl_parse!(Property, Self, {
-    choice((Func::parse().map(Self::Func), Name::parse().map(Self::Name)))
+    choice((Call::parse().map(Self::Call), Name::parse().map(Self::Name)))
 });
 
 #[derive(Debug)]
@@ -171,10 +171,10 @@ impl_parse!(BlockAttrs, {
 });
 
 #[derive(Debug)]
-pub struct BlockAttr(Positioned<Func>);
+pub struct BlockAttr(Positioned<Call>);
 
 impl_parse!(BlockAttr, {
     just(TokenType::BlockAttr)
-        .ignore_then(Func::parse())
+        .ignore_then(Call::parse())
         .map_with_span(|value, range| Positioned::new(Self(value), range))
 });

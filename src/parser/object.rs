@@ -6,7 +6,7 @@ use chumsky::{
 use crate::{impl_parse, Positioned, TokenType};
 
 use super::{
-    func::Func,
+    func::Call,
     terminal::{Literal, Name},
 };
 
@@ -51,11 +51,11 @@ impl_parse!(Expr, Self, {
 #[derive(Debug)]
 pub enum Value {
     Expr(Expr),
-    Func(Positioned<Func>),
+    Call(Positioned<Call>),
 }
 
 impl_parse!(Value, Self, {
-    choice((Expr::parse().map(Self::Expr), Func::parse().map(Self::Func)))
+    choice((Expr::parse().map(Self::Expr), Call::parse().map(Self::Call)))
 });
 
 #[derive(Debug)]

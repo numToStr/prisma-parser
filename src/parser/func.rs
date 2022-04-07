@@ -8,12 +8,12 @@ use crate::{impl_parse, Positioned, TokenType};
 use super::{object::Expr, terminal::Name};
 
 #[derive(Debug)]
-pub struct Func {
+pub struct Call {
     pub name: Positioned<Name>,
     pub args: Positioned<Args>,
 }
 
-impl_parse!(Func, {
+impl_parse!(Call, {
     Name::parse()
         .then(Args::parse())
         .map_with_span(|(name, args), range| Positioned::new(Self { name, args }, range))
@@ -35,7 +35,7 @@ pub enum Arg {
     Expr(Expr),
     Named(Positioned<Named>),
     Ref(Positioned<Name>),
-    // Func(Func),
+    // Call(Call),
 }
 
 impl_parse!(Arg, Self, {
@@ -43,7 +43,7 @@ impl_parse!(Arg, Self, {
         Expr::parse().map(Self::Expr),
         Named::parse().map(Self::Named),
         Name::parse().map(Self::Ref),
-        // Func::parse().map(Self::Func),
+        // Call::parse().map(Self::Call),
     ))
 });
 
