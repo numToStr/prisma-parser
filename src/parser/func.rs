@@ -1,9 +1,9 @@
 use chumsky::{
-    prelude::{choice, just},
+    prelude::{choice, just, recursive},
     Parser,
 };
 
-use crate::{impl_parse, Spanned, TokenType};
+use crate::{impl_parse, object::Array, terminal::Literal, Spanned, TokenType};
 
 use super::{object::Expr, terminal::Name};
 
@@ -13,38 +13,35 @@ pub struct Call {
     pub args: Spanned<Args>,
 }
 
-impl_parse!(Call, {
-    Name::parse()
-        .then(Args::parse())
-        .map_with_span(|(name, args), range| Spanned::new(Self { name, args }, range))
-});
-
 #[derive(Debug)]
 pub struct Args(Vec<Arg>);
 
-impl_parse!(Args, {
-    Arg::parse()
-        .separated_by(just(TokenType::Comma))
-        .delimited_by(just(TokenType::OpenParen), just(TokenType::CloseParen))
-        .map_with_span(|value, range| Spanned::new(Self(value), range))
-});
-
-// FIXME: handle function
 #[derive(Debug)]
 pub enum Arg {
-    Expr(Expr),
+    Array(Spanned<Array>),
+    Literal(Spanned<Literal>),
     Named(Spanned<Named>),
     Ref(Spanned<Name>),
-    // Call(Call),
+    Call(Spanned<Call>),
 }
 
-impl_parse!(Arg, Self, {
-    choice((
-        Expr::parse().map(Self::Expr),
-        Named::parse().map(Self::Named),
-        Name::parse().map(Self::Ref),
-        // Call::parse().map(Self::Call),
-    ))
+impl_parse!(Call, {
+    recursive(|x| {
+        Name::parse()
+            .then(
+                choice((
+                    x.map(Arg::Call),
+                    Literal::parse().map(Arg::Literal),
+                    Array::parse().map(Arg::Array),
+                    Named::parse().map(Arg::Named),
+                    Name::parse().map(Arg::Ref),
+                ))
+                .separated_by(just(TokenType::Comma))
+                .map_with_span(|node, range| Spanned::new(Args(node), range))
+                .delimited_by(just(TokenType::OpenParen), just(TokenType::CloseParen)),
+            )
+            .map_with_span(|(name, args), range| Spanned::new(Self { name, args }, range))
+    })
 });
 
 #[derive(Debug)]
