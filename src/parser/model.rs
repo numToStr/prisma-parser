@@ -30,12 +30,12 @@ impl_parse!(Model, {
 #[derive(Debug)]
 pub struct Block {
     pub columns: Spanned<Columns>,
-    pub attributes: Spanned<BlockAttrs>,
+    pub attributes: Option<Spanned<BlockAttrs>>,
 }
 
 impl_parse!(Block, {
     Columns::parse()
-        .then(BlockAttrs::parse())
+        .then(BlockAttrs::parse().or_not())
         .delimited_by(just(TokenType::OpenCurly), just(TokenType::CloseCurly))
         .map_with_span(|(columns, attributes), range| {
             Spanned::new(
@@ -61,13 +61,13 @@ impl_parse!(Columns, {
 pub struct Column {
     pub name: Spanned<Name>,
     pub scalar: Spanned<ColumnType>,
-    pub attributes: Spanned<Attributes>,
+    pub attributes: Option<Spanned<Attributes>>,
 }
 
 impl_parse!(Column, {
     Name::parse()
         .then(ColumnType::parse())
-        .then(Attributes::parse())
+        .then(Attributes::parse().or_not())
         .map_with_span(|((name, scalar), attributes), range| {
             Spanned::new(
                 Self {
@@ -88,7 +88,7 @@ pub struct ColumnType {
 
 impl_parse!(ColumnType, {
     ScalarType::parse()
-        .then(Modifier::parse())
+        .then(Modifier::parse().or_not())
         .map_with_span(|(value, modifier), range| Spanned::new(Self { value, modifier }, range))
 });
 
@@ -110,7 +110,7 @@ pub enum Modifier {
     Optional,
 }
 
-impl_parse!(Modifier, Option<Spanned<Self>>, {
+impl_parse!(Modifier, {
     choice((
         just(TokenType::Optional).to(Modifier::Optional),
         just(TokenType::OpenSquare)
@@ -118,7 +118,6 @@ impl_parse!(Modifier, Option<Spanned<Self>>, {
             .to(Modifier::Array),
     ))
     .map_with_span(Spanned::new)
-    .or_not()
 });
 
 #[derive(Debug)]
