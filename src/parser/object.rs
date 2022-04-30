@@ -33,29 +33,19 @@ impl_parse!(Field, {
         .map_with_span(|(key, value), range| Spanned::new(Self { key, value }, range))
 });
 
-// FIXME: Maybe add function expression then remove Value
-#[derive(Debug)]
-pub enum Expr {
-    Array(Spanned<Array>),
-    Literal(Spanned<Literal>),
-}
-
-impl_parse!(Expr, Self, {
-    choice((
-        Array::parse().map(Self::Array),
-        Literal::parse().map(Self::Literal),
-    ))
-});
-
-// TODO: interop with Expr
 #[derive(Debug)]
 pub enum Value {
-    Expr(Expr),
+    Array(Spanned<Array>),
+    Literal(Spanned<Literal>),
     Call(Spanned<Call>),
 }
 
 impl_parse!(Value, Self, {
-    choice((Expr::parse().map(Self::Expr), Call::parse().map(Self::Call)))
+    choice((
+        Array::parse().map(Self::Array),
+        Literal::parse().map(Self::Literal),
+        Call::parse().map(Self::Call),
+    ))
 });
 
 #[derive(Debug)]

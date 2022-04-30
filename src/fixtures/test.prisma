@@ -78,41 +78,41 @@ model StockItemBinLocationCount {
     // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#id-1
     @@id([binLocationId, stockItemId])
     // The ID is already unique but for reference, the equivalent might have been
-    // @@unique(fields: [binLocationId, stockItemId], name: "binLocationStockItem")
+    @@unique(fields: [binLocationId, stockItemId], name: "binLocationStockItem")
     // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#unique-1
 }
 
-// model StockItem {
-//     id  Int  @id  @default(autoincrement())
-//     createdAt   DateTime    @default(now())
-//     updatedAt   DateTime    @updatedAt  @default(now())
-//     description   String?
-//     // Barcodes should be unique as scanning a label should bring us to this item
-//     // Barcodes are numbers, but can contain leading zeros, so storing as String
-//     ean  String?  @unique // "European/International Article Number" - 13 char
-//     upc  String?  @unique // "Universal Product Code" - 12 char
-//     // Stock Items potentially exist in many bins each with different count
-//     stockItemCounts  StockItemBinLocationCount[]
-//     // TODO: Calulated Field to tally StockItemBinLocationCount?
-//     // TODO: Selling and Purchase "per" fields to determine fractional values if needed
-// }
-//
-// model User {
-//     id    Int  @id  @default(autoincrement())
-//     createdAt  DateTime  @default(now())
-//     updatedAt  DateTime  @updatedAt  @default(now())
-//     email       String   @unique
-//     firstName   String?  @db.VarChar(200)
-//     lastName    String?  @db.VarChar(200)
-//     // User role might determine access privilage
-//     role   Role     @default(OPERATIVE)
-//     // Users should be subbed to specific warehouses
-//     warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
-//     warehouseId  Int
-// }
-//
-// enum Role {
-//   OPERATIVE
-//   BACKOFFICE
-//   ADMIN
-// }
+model StockItem {
+    id  Int  @id  @default(autoincrement())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt  @default(now())
+    description   String?
+    // Barcodes should be unique as scanning a label should bring us to this item
+    // Barcodes are numbers, but can contain leading zeros, so storing as String
+    ean  String?  @unique // "European/International Article Number" - 13 char
+    upc  String?  @unique // "Universal Product Code" - 12 char
+    // Stock Items potentially exist in many bins each with different count
+    stockItemCounts  StockItemBinLocationCount[]
+    // TODO: Calulated Field to tally StockItemBinLocationCount?
+    // TODO: Selling and Purchase "per" fields to determine fractional values if needed
+}
+
+model User {
+    id    Int  @id  @default(autoincrement())
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt  @default(now())
+    email       String   @unique
+    firstName   String?  @db.VarChar(200)
+    lastName    String?  @db.VarChar(200)
+    // User role might determine access privilage
+    role   Role     @default(OPERATIVE)
+    // Users should be subbed to specific warehouses
+    warehouse    Warehouse  @relation(fields: [warehouseId], references: [id])
+    warehouseId  Int
+}
+
+enum Role {
+  OPERATIVE
+  BACKOFFICE
+  ADMIN
+}

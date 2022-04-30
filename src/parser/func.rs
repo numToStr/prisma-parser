@@ -5,7 +5,7 @@ use chumsky::{
 
 use crate::{impl_parse, object::Array, terminal::Literal, Spanned, TokenType};
 
-use super::{object::Expr, terminal::Name};
+use super::terminal::Name;
 
 #[derive(Debug)]
 pub struct Call {
@@ -55,4 +55,17 @@ impl_parse!(Named, {
         .then_ignore(just(TokenType::Colon))
         .then(Expr::parse())
         .map_with_span(|(key, value), range| Spanned::new(Self { key, value }, range))
+});
+
+#[derive(Debug)]
+pub enum Expr {
+    Array(Spanned<Array>),
+    Literal(Spanned<Literal>),
+}
+
+impl_parse!(Expr, Self, {
+    choice((
+        Array::parse().map(Self::Array),
+        Literal::parse().map(Self::Literal),
+    ))
 });
